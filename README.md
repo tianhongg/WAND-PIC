@@ -74,7 +74,7 @@ Suggestions and feedback are welcome.
 
 ## Author
 
-* **Tianhong Wang (Cornell University)** 
+* [**Tianhong Wang (Cornell University)**](tw474@cornell.edu) 
 
 
 
