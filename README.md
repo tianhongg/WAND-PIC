@@ -1,3 +1,6 @@
 # WAND-PIC
 
-#Oct 16
+
+
+![logo](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Logo.png)
+
