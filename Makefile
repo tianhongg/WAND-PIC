@@ -6,8 +6,8 @@ LD = mpiicpc
 FCFLAGS = -O3
 LDFLAGS = -O3
 
-INC = -I$(TACC_PNETCDF_INC)
-LIB = -L$(TACC_PNETCDF_LIB) -lpnetcdf
+INC = -I$/usr/local/include
+LIB = -L$/usr/local/lib -lpnetcdf
 
 EXE = WAND
 
