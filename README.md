@@ -10,7 +10,7 @@
 
 * 2D partitioning of the transverse domain.
 * Adjustive longitudinal step according to the speed of plasma trajectories.
-* Advanced quasi-static equations, there is no need of "predictor-corrector" scheme,
+* Advanced quasi-static equations, there is no need of "predictor-corrector" scheme.
 * In-house parallel Multigrid Solver. One for all equations.
 * Sub-cycling of macro beam particles, captures sophisticated wave-particle resonant interaction.
 * Parallel output and reload.
@@ -60,7 +60,7 @@ intel/18.0.2; impi/18.0.2; pnetcdf/1.11.0
 
 
 ## Running
-Example: running one a server with 36 cores
+Example: running on a server with 36 cores
 ```
 mpiexec -n 36 ./WAND
 ```
@@ -97,6 +97,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ```
 ||----------------------------------------------------------------------------------||
+||----------------------------------------------------------------------------------||
 ||                                                                                  ||
 ||               __        ___    _   _ ____        ____ ___ ____                   ||
 ||               \ \      / / \  | \ | |  _ \      |  _ \_ _/ ___|                  ||
@@ -106,5 +107,12 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ||                                                                                  ||
 ||----------------------------------------------------------------------------------||
 ||--  (W)akefield (A)cceleration a(n)d (D)LA - (P)article (i)n (C)ell Simulation  --||
+||----------------------------------------------------------------------------------||
+||---Author-----------           : Tianhong Wang                --------------------||
+||---Starting---------           : Jan-11-2019                  --------------------||
+||---Email------------           : tw474@cornell.edu            --------------------||
+||---Group------------           : Dr. Gennady Shvets' Group    --------------------||
+||---Copyright--------           : (C) 2019 by Tianhong Wang    --------------------||
+||----------------------------------------------------------------------------------||
 ||----------------------------------------------------------------------------------||
 ```
