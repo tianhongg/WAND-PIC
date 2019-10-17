@@ -23,22 +23,21 @@ You are welcome to clone or download this repository. :smile: Please also send a
 
 ## Prerequisites
 
-A MPI Library
+* A MPI Library
 ```
 impi or mpich
 ```
 
-A Parallel NetCDF Library
+* A Parallel NetCDF Library
 ```
 pnetcdf
 ```
 
+* A Brain. :thought_balloon:
 
-A Brain. :thought_balloon:
+* A Good Weather. :sun_with_face:
 
-A Good Weather. :sun_with_face:
-
-A Good Computer :computer: and Electricity. :zap:
+* A Good Computer :computer: and Electricity. :zap:
 
 
 ## Compiling
@@ -46,7 +45,7 @@ A simple & working Makefile is included [Makefile](Makefile). The 'make' should 
 
 
 ###  Tested Environment
-**WAND-PIC** has been tested on four different server/supercomputers, including:
+**WAND-PIC** has been tested on four different server/supercomputers, from few cores to over 4000 cores, including:
 
 * **TACC STAMPEDE2:** SKX Nodes [Intel Xeon Platinum 8160 ("Skylake")] 
 ```
@@ -77,7 +76,7 @@ mpiexec -n 36 ./WAND
 
 ## Developing
 
-I started to work on this project in early 2019, partially for fun, did everything from scratch. And I am the only author of this project. Due to the lack of workforce and limited energy & time, I may improve and update the code slowly in the future:snail::snail::snail::snail:. Hidden bugs are waiting to be found, and many functions need to be added.
+I started to work on this project in early 2019, partially for fun, did everything from scratch. And I am currently the only author of this project:scream_cat:. Due to the lack of workforce and limited energy & time, I may improve and update the code slowly in the future:snail::snail::snail::snail:. Hidden bugs are waiting to be found, and many functions need to be added.
 This version of WAND-PIC is the first version I finished recently (around July-2019) and it’s already been used in my research. During the development of WAND-PIC, I made many compromises in the code, many places need to be improved. For example, the Multigrid solver I developed, it needs further testing and improving.
 Suggestions and feedback are welcome.
 
