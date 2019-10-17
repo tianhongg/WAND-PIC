@@ -6,7 +6,7 @@
 
 **WAND-PIC** is a 3D parallel quasi-static particle-in-cell simulation code. Developed by Tianhong Wang in 2019, at Dr. Gennady Shvets' Group, Cornell University.
 
-You are welcome to clone or download this repository. Please also send an email to the author Tianhong Wang(tw474@cornell.edu). We'd like to keep track of user numbers and affiliations.
+You are welcome to clone or download this repository. :smile: Please also send an email to the author Tianhong Wang(tw474@cornell.edu). We'd like to keep track of user numbers and affiliations.
 
 ## Features
 
@@ -32,6 +32,13 @@ A Parallel NetCDF Library
 ```
 pnetcdf
 ```
+
+
+A Brain. :thought_balloon:
+
+A Good Weather. :sun_with_face:
+
+A Good Computer :computer: and Electricity. :zap:
 
 
 ## Compiling
@@ -70,7 +77,7 @@ mpiexec -n 36 ./WAND
 
 ## Developing
 
-I started to work on this project in early 2019, partially for fun, did everything from scratch. And I am the only author of this project. Due to the lack of workforce and limited energy & time, I may improve and update the code slowly in the future. Hidden bugs are waiting to be found, and many functions need to be added.
+I started to work on this project in early 2019, partially for fun, did everything from scratch. And I am the only author of this project. Due to the lack of workforce and limited energy & time, I may improve and update the code slowly in the future:snail::snail::snail::snail:. Hidden bugs are waiting to be found, and many functions need to be added.
 This version of WAND-PIC is the first version I finished recently (around July-2019) and it’s already been used in my research. During the development of WAND-PIC, I made many compromises in the code, many places need to be improved. For example, the Multigrid solver I developed, it needs further testing and improving.
 Suggestions and feedback are welcome.
 
