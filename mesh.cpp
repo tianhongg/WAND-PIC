@@ -380,7 +380,7 @@ void Mesh::Ionization()
 							xtemp = Offset_X + (i - 0.5)*dx;
 							ytemp = Offset_Y + (j - 0.5)*dy;
 							ztemp = z;
-							weight = Dop_ne;
+							weight = c.W_Deni*Dop_ne;
 							p = new Electron(xtemp, ytemp, ztemp, 0.0, 0.0, 0.0, ExR, EyR, EzR, 1.0, weight);
 							c.InoState=0;
  						}
