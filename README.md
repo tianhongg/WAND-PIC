@@ -7,7 +7,7 @@
 **WAND-PIC** is a 3D parallel quasi-static particle-in-cell simulation code. Developed by Tianhong Wang in 2019, at Dr. Gennady Shvets' Group, Cornell University.
 
 You are welcome to clone or download this repository. :smile: Please also send an email to the author Tianhong Wang(tw474@cornell.edu). We'd like to keep track of user numbers and affiliations.
-
+![plot](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Example_plot2.pdf)
 ## Features
 
 * 2D partitioning of the transverse domain.
@@ -88,10 +88,9 @@ Suggestions and feedback are welcome.
 - [ ] OpenMP..
 - [ ] Load Balance..
 
-
 ## Author
-
 * **Tianhong Wang (Cornell University)**(tw474@cornell.edu) 
+
 
 
 
