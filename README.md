@@ -66,6 +66,8 @@ intel/18.0.2; impi/18.0.2; pnetcdf/1.11.0
 
 (** when running with pnetcdf older than 1.10.0??, parallel output may not work properly. This happens on Lonestar5 occasionally for unknown reasons.)
 
+## Benchmarking
+![logo](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Benchmark.png)
 
 ## Running
 Example: running on a server with 36 cores
