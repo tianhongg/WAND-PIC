@@ -44,7 +44,7 @@ void Mesh::PushParticle()
 
 	double ExlR, EylR, EzlR, BxlR, BylR, BzlR;
 
-	double x, y, z, x0, y0, z0, px, py, pz, gamma;
+	double x, y, z, x0, y0, z0, px, py, pz, px0, py0, pz0, gamma;
 
 	double pxp, pyp, pzp;
 
@@ -66,6 +66,30 @@ void Mesh::PushParticle()
 	int NFreqs =  p_domain()->NFreqs;
 	int NF;
 	double OmegaL;
+
+
+	//===radiation part=========
+	double reinkp=sqrt(3)*(1e-9)*sqrt(Pla_ne/1.40251e20);//  sqrt(3)*re/lambda_L; classical electron radius in lambda_p
+	double theta_x;
+	double phi_y;
+	double Rcurve;   // radius of curvature.
+	double omegac;   //critical frequency.
+
+ 	double ThetaMax = XRayDetector->ThetaMax;
+ 	double PhiMax   = XRayDetector->PhiMax;
+	double OmegaMax = XRayDetector->OmegaMax;
+	double OmegaMin = XRayDetector->OmegaMin;
+
+	int NOmega = XRayDetector->NOmega;
+	int NTheta = XRayDetector->NTheta;
+	int NPhi   = XRayDetector->NPhi;
+
+	double dtheta =2*ThetaMax/NTheta;
+	double dphi   =2*PhiMax/NPhi;
+	double domega =(OmegaMax-OmegaMin)/NOmega;  //in KeV
+
+
+
 
 	p = p_Particle;
 
@@ -92,6 +116,9 @@ void Mesh::PushParticle()
 			x0=x;
 			y0=y;
 			z0=z;
+			px0=px;
+			py0=py;
+			pz0=pz;
 
 			x += 0.5*dtt*   px/gamma;
 			y += 0.5*dtt*   py/gamma;
@@ -287,7 +314,52 @@ void Mesh::PushParticle()
 			p->Wyl += 	   (y-y0) *EylR;
 			p->Wzl += (dtt-(z-z0))*EzlR;
 
-			//=======================================
+
+
+
+
+			//======================================	
+			// Raidation Calculation
+			//
+			if(XRayDetector->IfRadiation==1 && gamma>2 && pz>0)
+			{
+
+				theta_x = px/pz;
+				phi_y   = py/pz;
+				double vs =(px*px + py*py + pz*pz)/gamma/gamma;
+				double vvs=( (px-px0)*(px-px0) + (py-py0)*(py-py0) + (pz-pz0)*(pz-pz0) )/gamma/gamma/dtt/dtt;
+				double vdvv= ( (px-px0)*px+ (py-py0)*py + (pz-pz0)*pz )/gamma/gamma/dtt;
+				if(vs*vvs-vdvv*vdvv==0)
+				{
+					Rcurve  = 1e20;
+					omegac  = 0.0;
+					
+				}
+				else
+				{
+					Rcurve  = pow(vs, 1.5)/sqrt(vs*vvs-vdvv*vdvv);
+					omegac  = 1.5*gamma*gamma*gamma/Rcurve;
+				}
+				
+				// calculate wavepacket energy
+				double k1=sqrt((x-x0)*(x-x0)+(y-y0)*(y-y0)+(dtt-(z-z0))*(dtt-(z-z0)))/Rcurve*gamma*reinkp;
+				k1 *=p->weight;
+
+				omegac *= 1.2398*sqrt(Pla_ne/1.114855e21)/1000;
+
+				// deposit the packet on detector
+				int idx_i=floor(omegac/domega);
+				int idx_j=floor((theta_x+ThetaMax)/dtheta-0.5);
+				int idx_k=floor((phi_y+PhiMax)/dphi-0.5);
+				
+				if(idx_i>=0&&idx_i<NOmega
+				 &&idx_j>=0&&idx_j<NTheta
+				 &&idx_k>=0&&idx_k<NPhi) XRayDetector->PutPacket(idx_i, idx_j, idx_k, k1);
+
+			}
+
+
+
 
 		}
 
@@ -442,6 +514,7 @@ void Mesh::ExchangeP()
 		}
 
 		}
+
 
 		//=====================================================================
 		//======== Exchange Partectoryies with Neighboring Processors =========

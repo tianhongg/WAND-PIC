@@ -46,18 +46,40 @@ double Mesh::ProfileLongi(double xt, double yt, double zt)
 {
     double tmp;
  
-    if (zt<PlasmaBegin || zt>PlasmaEnd) return 0.0;
 
-    if (zt<PlateauBegin)
+    switch(PProfileL)
     {
-      tmp = (zt-PlasmaBegin)/(PlateauBegin-PlasmaBegin);
-      return tmp;
+
+      case 1:
+
+        if (zt<PlasmaBegin || zt>PlasmaEnd) return 0.0;
+
+        if (zt<PlateauBegin)
+        {
+          tmp = (zt-PlasmaBegin)/(PlateauBegin-PlasmaBegin);
+          return tmp;
+        }
+
+        if (zt>PlateauEnd) 
+        {
+          tmp = (PlasmaEnd - zt)/(PlasmaEnd-PlateauEnd);
+          return tmp;
+        
+        }
+
+      break;
+
+      //
+      case 2:
+
+      break;
+
+
+
+
     }
 
-    if (zt>PlateauEnd) {
-      tmp = (PlasmaEnd - zt)/(PlasmaEnd-PlateauEnd);
-      return tmp;
-    }
+
 
     return 1.0;
 }; 

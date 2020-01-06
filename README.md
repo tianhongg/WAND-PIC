@@ -85,6 +85,7 @@ Suggestions and feedback are welcome.
 
 ## Task Lists
 - [x] Periodic Boundary Condition (finished, need test and upload)..
+- [x] A Reduced, Simplified Radiation Module (Classical)..
 - [ ] More and Better MG Solver Smoother..
 - [ ] High-order Pondermotive Potential..
 - [ ] OpenMP..

@@ -31,6 +31,7 @@ Mesh::Mesh(int XGridN, int YGridN, int ZGridN, FILE *f): NList ("Plasma")
 	p_Trajectory = NULL;
 	p_Particle	 = NULL;
 	p_CellArray  = NULL;
+	XRayDetector = NULL;
 	dAx1 = dAx2 = dAy1 = dAy2 = NULL;
 
 	Rank = p_domain()->p_Partition()->Get_Rank();
@@ -128,6 +129,10 @@ Mesh::Mesh(int XGridN, int YGridN, int ZGridN, FILE *f): NList ("Plasma")
    		if (Rank==0)  std::cout << "==== Mesh: Wrong Trajectory Pushing Order====\n";
   		exit(-10);
   	}
+
+
+  	// Radiation Detector
+  	XRayDetector = new Detector(f);
 
 
 
@@ -426,6 +431,77 @@ void Mesh::Ionization()
 
 
 
+
+Detector::Detector(FILE *f): NList ("Detector")
+{
+	p_DetectArray=NULL;
+
+
+	int rank = p_domain()->p_Partition()->Get_Rank();
+	
+  	AddEntry((char*)"Radiation", 	&IfRadiation, 0);
+
+  	AddEntry((char*)"ThetaMax", 	&ThetaMax, 0.2);
+  	AddEntry((char*)"ThetaGrid", 	&NTheta, 150);
+
+  	AddEntry((char*)"PhiMax", 		&PhiMax, 0.2);
+  	AddEntry((char*)"PhiGrid",		&NPhi, 150);
+
+  	AddEntry((char*)"OmegaMin",		&OmegaMin, 0);
+  	AddEntry((char*)"OmegaMax",		&OmegaMax, 50);
+  	AddEntry((char*)"OmegaGrid",	&NOmega,   200);
+
+
+	if (f)
+    {
+      rewind(f);
+      read(f);
+    }
+
+
+    if(IfRadiation>0 && NTheta>0 && NPhi>0 &&NOmega>0)
+    {
+
+    	try
+    	{
+  
+			p_DetectArray = new double[NTheta*NPhi*NOmega];
+			if (rank==0)  std::cout << "==== Mesh: Radiation Detector Created.   ====\n";
+		}
+  		catch (std::exception& e)
+  		{
+  			std::cout << "==== Mesh: Creating Cell Failed.         ====\n";
+  			std::cout << "==== Maybe Too Many Points per Processor ====\n";
+    		std::cout << e.what() << '\n';
+    		exit(1);
+  		}
+    		
+    }
+    else
+    {
+    		if (rank==0)  std::cout << "==== Mesh: No Radiation Detector.        ====\n";
+    }
+
+ 	if(IfRadiation>0 && NTheta>0 && NPhi>0 &&NOmega>0)
+    {
+
+ 		for (int k=0; k<NPhi; k++)
+		{
+			for (int j=0; j<NTheta; j++)
+			{
+				for (int i=0; i<NOmega; i++)
+				{
+					p_DetectArray[GetDectN(i,j,k)]=0;
+				}
+			}
+		}
+
+	}
+
+}
+
+
+
 Mesh::~Mesh() 
 {
 	delete[] p_CellArray;
@@ -435,4 +511,10 @@ Mesh::~Mesh()
 	delete[] dAx2;
 	delete[] dAy1;
 	delete[] dAy2;
+	delete XRayDetector;
+};
+
+Detector::~Detector() 
+{
+	if(p_DetectArray) delete[] p_DetectArray;
 };

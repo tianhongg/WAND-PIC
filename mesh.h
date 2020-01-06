@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 
+class Detector;
 //---------------------------- Mesh class -----------------------
 class Mesh : public NList {
 
@@ -79,6 +80,7 @@ private:
    Cell*        p_CellArray;
    Trajectory*  p_Trajectory;
    Particle*    p_Particle;
+   Detector*    XRayDetector;
    
 public:
 
@@ -179,7 +181,6 @@ public:
 
    double    ProfileLongi(double xt, double yt, double zt);
    double    ProfileTrans(double xt, double yt, double zt);
-
    void PushTrajectory(double k0, int k, int step);
    void PushParticle();
    void AdjustZstep(double k0, int k, double &dz2dz);
@@ -199,4 +200,54 @@ public:
    ~Mesh();
 };
 
+
+
+
+class Detector : public NList {
+
+   friend class Domain;
+   friend class Mesh;
+
+private:
+   
+   Domain *p_domain() {return Domain::p_Domain;}; // pointer to domain class.
+
+public:
+
+
+   double* p_DetectArray;
+   int IfRadiation;
+
+   
+   double ThetaMax;
+   int NTheta;
+
+   double PhiMax;
+   int NPhi;
+
+   double OmegaMin;
+   double OmegaMax;
+   int NOmega;  
+
+
+   // i=omega j=theta k=phi
+   inline int GetDectN(int i, int j, int k) 
+   {
+      return i+(NOmega)*(j+(NTheta)*k);
+   };
+
+   inline double GetDetector(int i, int j, int k)
+   {
+      return p_DetectArray[GetDectN(i,j,k)];
+   };
+
+   inline void PutPacket(int i, int j, int k, double EE)
+   {
+      p_DetectArray[GetDectN(i,j,k)]+=EE;
+      return;
+   };
+
+   Detector(FILE *f);
+   ~Detector();
+};
 #endif

@@ -134,9 +134,10 @@ class Domain : public NList{
     Commute    *p_Com()         {return p_Comm;}
 
 
-    int   Save(int nt);
-    int Save2D(int nt, int savedim);
+    int  Save(int nt);
+    int  Save2D(int nt, int savedim);
     int  SaveP(int nt);
+    int  SaveXray(int nt);
     int  LoadPulse(int nt);
     int  LoadParti(int nt);
     void AddSpecie(int P_type);

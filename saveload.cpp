@@ -300,6 +300,7 @@ int Domain::Save(int nt)
 	}
 
 	if(Nbeam) SaveP(nt);
+	SaveXray(nt);
 	return 0;
 
 }
@@ -685,6 +686,9 @@ int Domain::Save2D(int nt, int savedim)
 
 	
 	if(Nbeam) SaveP(nt);
+
+	SaveXray(nt);
+
 	return 0;
 
 }
@@ -965,6 +969,126 @@ int Domain::SaveP(int nt)
 
 
 	return 0;
+
+}
+
+
+
+int Domain::SaveXray(int nt)
+{
+
+	int type;
+	int Npart=0;
+	int Nparts;
+	for (int n=0; n<NSpecie; n++)
+	{
+		type   = SpecieType[n];
+		Npart += Get_NSpecie(type);
+	}
+	MPI_Allreduce(&Npart, &Nparts, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+	if( p_Meshes->XRayDetector==0)   return 0;
+ 	if( Nparts==0) return 0;
+ 	
+	int NOmega = p_Meshes->XRayDetector->NOmega;
+	int NTheta = p_Meshes->XRayDetector->NTheta;
+	int NPhi   = p_Meshes->XRayDetector->NPhi;
+
+	double Xray[NOmega][NTheta][NPhi];
+	double XraySpatial[NTheta][NPhi];
+	double XraySpatialAll[NTheta][NPhi];
+
+	for(int i=0;i<NOmega;i++)
+	{
+
+		for(int j=0;j<NTheta;j++)
+		{
+			for(int k=0;k<NPhi;k++)
+			{
+				XraySpatial[j][k]   =p_Meshes->XRayDetector->GetDetector(i,j,k);
+				XraySpatialAll[j][k]=0.0;
+			}
+		}
+		MPI_Reduce(&XraySpatial[0][0], &XraySpatialAll[0][0],NTheta*NPhi, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		if(Rank==0) 
+		{
+
+
+			for(int j=0;j<NTheta;j++)
+			{
+				for(int k=0;k<NPhi;k++)
+				{
+					Xray[i][j][k]=XraySpatialAll[j][k];
+
+				}
+			}
+
+
+		}
+
+	}
+
+
+
+	
+	char sFile[128];
+	static const int NC_ERR = 1;
+	int retval, ncid; 
+	int no_id,  nt_id,  np_id, F_DIM[3];
+	int Xray_id;
+	MPI_Info info;
+	MPI_Info_create(&info);
+	MPI_Offset fstart[3], fcount[3];
+
+	//========================================
+	//========= Create nc File ===============
+	sprintf(sFile,"XRay_%d.nc",nt);
+	if((retval = ncmpi_create(MPI_COMM_WORLD, sFile, NC_CLOBBER|NC_64BIT_OFFSET, info, &ncid)) ) 
+	{
+    	if(Rank==0) std::cout<< "Domain: pnetcdf error:" << retval << " while creating " << sFile << "." <<'\n';
+    	return NC_ERR;
+	}
+
+	if ( (retval = ncmpi_def_dim(ncid, "n_omega",    NOmega, &no_id)) )	return NC_ERR;
+	if ( (retval = ncmpi_def_dim(ncid, "n_theta(x)", NTheta, &nt_id)) ) return NC_ERR;
+	if ( (retval = ncmpi_def_dim(ncid, "n_theta(y)", NPhi, 	 &np_id)) ) return NC_ERR;
+
+
+	F_DIM[0] = no_id;
+  	F_DIM[1] = nt_id;
+  	F_DIM[2] = np_id;
+
+  	fstart[0]=0;fstart[1]=0;fstart[2]=0;
+  	fcount[0]=0;fcount[1]=0;fcount[2]=0;
+
+  	if(Rank==0) {fcount[0]=NOmega;fcount[1]=NTheta;fcount[2]=NPhi;}
+  	//========================================
+	//========= Define Variables =============
+	if ( (retval = ncmpi_def_var(ncid, "X_Ray", NC_DOUBLE, 3, F_DIM, &Xray_id)) ) return NC_ERR;
+	if ( (retval = ncmpi_enddef(ncid)) ) return NC_ERR;
+
+	if ( (retval = ncmpi_put_vara_double_all(ncid, Xray_id, fstart, fcount,  &Xray[0][0][0])) ) return NC_ERR;
+
+	if ( (retval = ncmpi_sync(ncid)) )
+  	{
+		if(Rank==0) std::cout<< "Domain: pnetcdf error " << retval <<  " while syncing " << sFile << "." <<'\n';
+		return NC_ERR; 
+	}
+  
+	if ( (retval = ncmpi_close(ncid)) ) 
+	{
+		if(Rank==0) std::cout<< "Domain: pnetcdf error " << retval << " while closing " << sFile << "." <<'\n';
+		return NC_ERR;
+	}
+
+	
+
+	
+
+
+
+	return 0;
+
 
 }
 
