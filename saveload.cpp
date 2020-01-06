@@ -987,7 +987,7 @@ int Domain::SaveXray(int nt)
 	}
 	MPI_Allreduce(&Npart, &Nparts, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-	if( p_Meshes->XRayDetector==0)   return 0;
+	if( p_Meshes->XRayDetector->IfRadiation==0)   return 0;
  	if( Nparts==0) return 0;
  	
 	int NOmega = p_Meshes->XRayDetector->NOmega;
