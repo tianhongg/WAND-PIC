@@ -78,7 +78,9 @@ mpiexec -n 36 ./WAND
 
 
 ## Simulation Example
+
 **Intense Laser Pulse Propagates in the Tenuous Plasma** 
+
 ![logo](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Example_LWFA.gif)
 
 
