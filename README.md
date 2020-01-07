@@ -76,6 +76,14 @@ mpiexec -n 36 ./WAND
 ```
 
 
+
+## Simulation Example
+**Intense Laser Pulse Propagates in the Tenuous Plasma** 
+![logo](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Example_LWFA.gif)
+
+
+
+
 ## Developing
 
 I started to work on this project in early 2019, partially for fun and personal entertainment, did everything from scratch. And I am currently the only author of this project:scream_cat:. Due to the lack of workforce and limited energy & time, I may improve and update the code slowly in the future:snail::snail::snail::snail:. Hidden bugs are waiting to be found, and many functions/modules need to be added.
