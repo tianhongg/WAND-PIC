@@ -405,8 +405,8 @@ int Domain::Save2D(int nt, int savedim)
 				 nb[i-1][k] = ccc.B_Den;
 				Psi[i-1][k] = ccc.W_Psi;
 
-				WEx[i-1][k] = ccc.W_Ex;
-				WEy[i-1][k] = ccc.W_Ey;
+				WEx[i-1][k] = -ccc.W_Ex+ccc.W_By;
+				WEy[i-1][k] = -ccc.W_Ey-ccc.W_Bx;
 				WEz[i-1][k] = ccc.W_Ez;
 
 				WBx[i-1][k] = ccc.W_Bx;
@@ -441,8 +441,8 @@ int Domain::Save2D(int nt, int savedim)
 				 nb[j-1][k] = ccc.B_Den;
 				Psi[j-1][k] = ccc.W_Psi;
 
-				WEx[j-1][k] = ccc.W_Ex;
-				WEy[j-1][k] = ccc.W_Ey;
+				WEx[j-1][k] = -ccc.W_Ex+ccc.W_By;
+				WEy[j-1][k] = -ccc.W_Ey-ccc.W_Bx;
 				WEz[j-1][k] = ccc.W_Ez;
 
 				WBx[j-1][k] = ccc.W_Bx;
