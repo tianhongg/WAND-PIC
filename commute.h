@@ -71,6 +71,8 @@ private:
    int GridX;
    int GridY;
 
+   int kold;
+
 
 
 

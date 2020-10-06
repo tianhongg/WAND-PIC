@@ -58,6 +58,8 @@ Commute::Commute(int XGridN, int YGridN)
 	GridX = XGridN;
 	GridY = YGridN;
 
+	kold=-10;
+
 	if( (p_domain()->Get_Nbeam()) > 0 )
 	{ 
 	SendSouSizeX = YGridN * (SOU_DIM +BEA_DIM ) * 2;   //send in X directions: left and right
@@ -197,6 +199,8 @@ void Commute::DoCommute(int what, int k)
 	//unpack the fields or source.
 	UnPack(what, k);
 
+	kold=k;
+
 	return;
 
 }
@@ -294,7 +298,7 @@ void Commute::DoPack(int what, int k)
 		case COMMU_S:
 
 		int NSource=SOU_DIM;
-		if(p_domain()->Get_Nbeam()>0) NSource=SOU_DIM+BEA_DIM;
+		if(p_domain()->Get_Nbeam()>0&&kold!=k) NSource=SOU_DIM+BEA_DIM;
 		
 		// Put the Sources at the Overlapping Cells into Send Array;
 		// Send Direction: Y: up and down
@@ -508,8 +512,6 @@ void Commute::DoPack(int what, int k)
 }
 
 
-
-
 void Commute::UnPack(int what, int k)
 {
 	Mesh *p_Meshs  = p_domain()->p_Mesh();
@@ -526,7 +528,7 @@ void Commute::UnPack(int what, int k)
 		//===============================================================
 		case COMMU_S:
 		int NSource=SOU_DIM;
-		if(p_domain()->Get_Nbeam()>0) NSource=SOU_DIM+BEA_DIM;
+		if(p_domain()->Get_Nbeam()>0&&kold!=k) NSource=SOU_DIM+BEA_DIM;
 		// Pull sources from the Rece Array, and add on the edging cells ;
 		// Receive Direction: Y
 		for (m = 0; m<=1; m++)
