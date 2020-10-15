@@ -575,6 +575,8 @@ void Mesh::SetFieldZeroAfter(int k0)
 return;
 }
 
+// only for very rare situations you need set Psi-limit
+// most of the divergence can be solved by change adaptive step.
 void Mesh::AdjustPsi(int k)
 {
 	int i,j;
@@ -585,7 +587,7 @@ void Mesh::AdjustPsi(int k)
 		for (i=0; i<=GridX+1; i++)
 		{
 			Cell &ccc = GetCell(i, j, k);
-			if(ccc.W_Psi<psimin) ccc.W_Psi=psimin;
+		//	if(ccc.W_Psi<psimin) ccc.W_Psi=psimin;
 		}
 	}
 

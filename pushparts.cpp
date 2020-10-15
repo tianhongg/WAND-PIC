@@ -89,8 +89,6 @@ void Mesh::PushParticle()
 	double domega =(OmegaMax-OmegaMin)/NOmega;  //in KeV
 
 
-
-
 	p = p_Particle;
 
 	while (p)
