@@ -11,7 +11,7 @@ You are welcome to clone or download this repository. :smile: Please also send a
 ## Features
 
 * 2D partitioning of the transverse domain.
-* Adjustive longitudinal step according to the speed of plasma trajectories.
+* Adaptive longitudinal mesh refinement according to the speed of plasma trajectories.
 * Advanced quasi-static equations, there is no need of "predictor-corrector" scheme.
 * In-house parallel Multigrid Solver. One for all equations.
 * Sub-cycling of macro beam particles, captures sophisticated wave-particle resonant interaction.
@@ -32,8 +32,6 @@ impi or mpich
 ```
 pnetcdf
 ```
-
-* A Brain. :thought_balloon:
 
 * A Good Weather. :sun_with_face:
 
@@ -97,10 +95,11 @@ Suggestions and feedback are welcome.
 ## Task Lists
 - [x] Periodic Boundary Condition (finished, need test and upload)..
 - [x] A Reduced, Simplified Radiation Module (Classical)..
+- [ ] Pipeline in Longitudinal Direction and Load Balance..
 - [ ] More and Better MG Solver Smoother..
 - [ ] High-order Pondermotive Potential..
 - [ ] OpenMP..
-- [ ] Load Balance..
+
 
 ## Author
 * **Tianhong Wang (Cornell University)**(tw474@cornell.edu) 
@@ -115,7 +114,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Acknowledgments
 
 * The author of **WAND-PIC** would like to thank all members in Dr. Gennady Shvets' Plasma Group at Cornell University. 
-* Thank Dr. Vladimir N. Khudik for deriving related equations.
+* Thank Dr. Vladimir N. Khudik for his help in deriving related equations.
 * Thank Dr. Roopendra Singh Rajawat for inventing the name "WAND-PIC".
 
 #### Reference
