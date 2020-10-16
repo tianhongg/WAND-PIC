@@ -31,12 +31,11 @@ int Domain::RK2(double &k0, int &k)
 
    p_Meshes ->AdjustZstep(k0, k, dz2dz);
 
-
    //================================
    //========  RK2  ======
-   if((ierr = PushWakeFields(k))) return 0;
+   if((ierr = PushWakeFields(true, k))) return 0;
    p_Meshes ->PushTrajectory(k0, k, 1);
-   if((ierr = PushWakeFields(k))) return 0;
+   if((ierr = PushWakeFields(false,k))) return 0;
    p_Meshes ->PushTrajectory(k0, k, 0);
 
    // p_Meshes ->AdjustZstep(k0, k);
@@ -75,7 +74,7 @@ int Domain::RK1(double &k0, int &k)
 
    //================================
    //======== Push Wakefields  ======
-   if((ierr = PushWakeFields(k))) return 0;
+   if((ierr = PushWakeFields(true, k))) return 0;
    //================================
    //======== Push Trajectory  ======
    //======== and Exchange Traj =====
@@ -104,6 +103,48 @@ int Domain::RK1(double &k0, int &k)
 }
 
 
+int Domain::Boris(double &k0, int &k)
+{
+   int ierr=0;
+   int NF;
+   double dz2dz;
+
+
+   p_Meshes ->AdjustZstep(k0, k, dz2dz);
+   //================================
+   //======== Push Trajectory by E ======
+   if((ierr = PushWakeFieldsE(true,k))) return 0;
+   p_Meshes ->PushTrajectory_HalfE(k);
+
+   //======== Push Wakefields B ======
+   if((ierr = PushWakeFieldsB(false, k))) return 0;
+   p_Meshes ->PushTrajectory_HalfB(k);
+
+   //======== Push Trajectory by E ======
+   if((ierr = PushWakeFieldsEz(false,k))) return 0;
+   p_Meshes ->PushTrajectory_HalfE(k);
+
+   p_Meshes ->PushTrajectory_Half();
+   //================================
+   k  = ceil(k0 + dz2dz);
+   k0 =     (k0 + dz2dz); 
+
+   //================================
+   //================================
+   //======== Push Laser Ax, Ay ======
+   if(NFreqs>0 &&  k0==k)
+   {
+      for(NF=0; NF<NFreqs; NF++)
+      {
+         if((ierr = PushPulses(k-1, NF))) return 0;
+      }
+   }
+   //================================
+
+   return 1;
+
+}
+
 int Domain:: PushPulses(int k, int NF)
 {
    int ierr = 0;
@@ -124,48 +165,51 @@ int Domain:: PushPulses(int k, int NF)
 }
 
 
-int Domain:: PushWakeFields(int k)
+int Domain:: PushWakeFields(bool exbeam, int k)
 {
    int ierr=0;
    //================================
    //========  Plasma Source  =======
-   p_Meshes -> MacroSource(k);
-   p_Comm   -> DoCommute(COMMU_S, k);
-   //================================
+   p_Meshes -> MacroSource(exbeam,k);
+
+
+   if(exbeam)  p_Comm   -> DoCommute(COMMU_S, k);
+   else        p_Comm   -> DoCommute(COMMU_SO, k);
+
    //========  Wake: Psi   ==========
    if( (ierr = p_Multi  -> MG_V_cycle(0, k)) )  return 1;
    p_Meshes -> AdjustPsi(k);
    //==== Psi Exchanged After MG=====
-   //================================
+
    //========  Wake: Chi   ==========
    p_Meshes -> Put_Chi(k);
-   //================================
+
    //========  Wake: dPsi/dx ========
    p_Meshes -> Partial_Psi(k);
    //================================
    //========  Wake: Ez    ==========
    if( (ierr = p_Multi  -> MG_V_cycle(1, k)) )  return 1;
    //==== Ez Exchanged After MG======
-   //================================
+
    //========  Wake: Bz    ==========
    if( (ierr = p_Multi  -> MG_V_cycle(2, k)) )  return 1;
    //==== Bz Exchanged After MG======
-   //================================
+
    //======= Wake: d|A|^2/dx ========
 
    if(NFreqs>0) p_Meshes -> Pondermotive(k);
-   //================================
+
    //========  Wake: Jz  ============
    p_Meshes -> Put_Jz(k);
-   //================================
+
    //========  Wake: Bx    ==========
    if( (ierr = p_Multi  -> MG_V_cycle(3, k)) )  return 1;
    //==== Bx Exchanged After MG======
-   //================================
+
    //========  Wake: By    ==========
    if( (ierr = p_Multi  -> MG_V_cycle(4, k)) )  return 1;
    //==== By Exchanged After MG======
-   //================================
+
    //======== Exchange Wakefield  ===
    //======== Ex Ey Ponx Pony =======
    p_Comm   -> DoCommute(COMMU_F, k);
@@ -175,4 +219,91 @@ int Domain:: PushWakeFields(int k)
    return 0;
 
 
+}
+
+int Domain:: PushWakeFieldsE(bool exbeam, int k)
+{
+   int ierr=0;
+   //================================
+   //========  Plasma Source  =======
+   p_Meshes -> MacroSource(exbeam,k);
+
+   if(exbeam)  p_Comm   -> DoCommute(COMMU_S, k);
+   else        p_Comm   -> DoCommute(COMMU_SO, k);
+
+   //========  Wake: Psi   ==========
+   if( (ierr = p_Multi  -> MG_V_cycle(0, k)) )  return 1;
+   p_Meshes -> AdjustPsi(k);
+   //==== Psi Exchanged After MG=====
+
+   //========  Wake: Chi   ==========
+   p_Meshes -> Put_Chi(k);
+
+   //========  Wake: dPsi/dx ========
+   p_Meshes -> Partial_Psi(k);
+
+   //========  Wake: Ez    ==========
+   if( (ierr = p_Multi  -> MG_V_cycle(1, k)) )  return 1;
+   //==== Ez Exchanged After MG======
+   //================================
+   
+   //======= Wake: d|A|^2/dx ========
+   if(NFreqs>0) p_Meshes -> Pondermotive(k);
+   //================================
+
+   //======== Exchange Wakefield  ===
+   //======== Ex Ey Ponx Pony =======
+   p_Comm   -> DoCommute(COMMU_F, k);
+   p_Meshes ->AdjustFields(k);
+   return 0;
+}
+
+
+int Domain:: PushWakeFieldsEz(bool exbeam, int k)
+{
+   int ierr=0;
+   //================================
+   //========  Plasma Source  =======
+   p_Meshes -> MacroSource(exbeam,k);
+
+   if(exbeam)  p_Comm -> DoCommute(COMMU_S, k);
+   else        p_Comm -> DoCommute(COMMU_SO, k);
+   //================================
+   //========  Wake: Ez    ==========
+   if( (ierr = p_Multi  -> MG_V_cycle(1, k)) )  return 1;
+   //==== Ez Exchanged After MG======
+   //================================
+   p_Meshes ->AdjustFields(k);
+   return 0;
+}
+
+int Domain:: PushWakeFieldsB(bool exbeam, int k)
+{
+   int ierr=0;
+   //================================
+   //========  Plasma Source  =======
+   p_Meshes -> MacroSource(exbeam,k);
+
+   if(exbeam)  p_Comm -> DoCommute(COMMU_S, k);
+   else        p_Comm -> DoCommute(COMMU_SO, k);
+
+   //========  Wake: Bz    ==========
+   if( (ierr = p_Multi  -> MG_V_cycle(2, k)) )  return 1;
+   //==== Bz Exchanged After MG======
+   
+   //========  Wake: Jz  ============
+   p_Meshes -> Put_Jz(k);
+
+   //========  Wake: Bx    ==========
+   if( (ierr = p_Multi  -> MG_V_cycle(3, k)) )  return 1;
+   //==== Bx Exchanged After MG======
+
+   //========  Wake: By    ==========
+   if( (ierr = p_Multi  -> MG_V_cycle(4, k)) )  return 1;
+   //==== By Exchanged After MG======
+
+   //======== Exchange Wakefield  ===
+   p_Meshes ->AdjustFields(k);
+
+   return 0;
 }

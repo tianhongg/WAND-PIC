@@ -121,7 +121,11 @@ class Domain : public NList{
     // ========run===========
     int RK1(double &k0, int &k);
     int RK2(double &k0, int &k);
-    int PushWakeFields(int k);
+    int Boris(double &k0, int &k);
+    int PushWakeFields(bool exbeam,   int k);
+    int PushWakeFieldsE(bool exbeam,  int k);
+    int PushWakeFieldsEz(bool exbeam, int k);
+    int PushWakeFieldsB(bool exbeam,  int k);
     int PushPulses(int k, int NF);
     void Run();
 

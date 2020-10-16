@@ -141,8 +141,8 @@ public:
    void   AddParticle(Particle*   p_Part);
 
 
-   void  MacroSource(int k);
-   void AdjustSource(int k);
+   void  MacroSource(bool exbeam, int k);
+   void AdjustSource(bool exbeam, int k);
    void AdjustFields(int k);
    void AdjustPsi(int k);
    void SetSourceZero(int k);
@@ -182,6 +182,9 @@ public:
    double    ProfileLongi(double xt, double yt, double zt);
    double    ProfileTrans(double xt, double yt, double zt);
    void PushTrajectory(double k0, int k, int step);
+   void PushTrajectory_Half();
+   void PushTrajectory_HalfE(int k);
+   void PushTrajectory_HalfB(int k);
    void PushParticle();
    void AdjustZstep(double k0, int k, double &dz2dz);
    void ExchangeT();

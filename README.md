@@ -87,7 +87,7 @@ mpiexec -n 36 ./WAND
 
 ## Developing
 
-I started to work on this project in early 2019, partially for fun and personal entertainment, did everything from scratch. And I am currently the only author of this project:scream_cat:. Due to the lack of workforce and limited energy & time, I may improve and update the code slowly in the future:snail::snail::snail::snail:. Hidden bugs are waiting to be found, and many functions/modules need to be added.
+I started to work on this project in early 2019 and I am currently the only author of this project:scream_cat:. Due to the lack of workforce and limited energy & time, I may improve and update the code slowly in the future:snail::snail::snail::snail:. Hidden bugs are waiting to be found, and many functions/modules need to be added.
 This version of WAND-PIC is the first version I finished recently (around July-2019) and it’s already been used in several research. During the development of WAND-PIC, I am trying to keep as less dependency as possible and the pnetcdf is the only lib I use. Some part of the code are still under developing, for example, the Multigrid class, it needs further testing and improving.
 Suggestions and feedback are welcome.
 

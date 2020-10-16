@@ -177,6 +177,269 @@ void Mesh::PushTrajectory(double k0, int k, int step)
 
 }
 
+void Mesh::PushTrajectory_Half()
+{
+
+	Trajectory *p = NULL;
+	
+	double xt, yt, Vx, Vy, xtp, ytp;
+	double dztmp;
+
+	int Xpa  = p_domain()->p_Partition()->GetXpart();
+	int Ypa  = p_domain()->p_Partition()->GetYpart();
+
+	double Xmax = Offset_X+GridX*dx;
+	double Ymax = Offset_Y+GridY*dy;
+
+	p = p_Trajectory;
+
+	while (p)
+	{
+
+		xt = p-> x;
+		yt = p-> y;
+
+		Vx = p-> Vx;
+		Vy = p-> Vy;
+		//=================================================
+		//============Trajectory Outside Boundary =========
+		//=================================================
+		if(RankIdx_X ==1	& xt<=Offset_X)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_X == Xpa & xt>=Xmax)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_Y == 1	& yt<=Offset_Y)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_Y == Ypa & yt>=Ymax)
+		{ p = p->p_PrevTraj; continue;}
+		//==================================================
+
+		// Push  position only......
+		dztmp=dzz;
+		xtp = p-> old_x  + Vx*dztmp;
+		ytp = p-> old_y  + Vy*dztmp;
+
+		p-> x = xtp;
+		p-> y = ytp;
+
+		p-> old_x = xtp;
+		p-> old_y = ytp;
+
+		p = p->p_PrevTraj;
+
+	}
+	//============================================
+	//=========== Exchange Particles =============
+	ExchangeT();
+	//============================================
+	return;
+
+}
+
+void Mesh::PushTrajectory_HalfE(int k)
+{
+
+	Trajectory *p = NULL;
+	double ddx;
+	double ddy;
+	double Ex, Ey, Ez, Psi, Pondx, Pondy, Asq;
+	double Fx, Fy, gamma;
+
+	double xt, yt, Vx, Vy, Vxp, Vyp, xtp, ytp;
+	double wmm, wmp, wpm, wpp;
+	double dxdy = dx*dy;
+	double dztmp;
+	int i,j;
+
+	int Xpa  = p_domain()->p_Partition()->GetXpart();
+	int Ypa  = p_domain()->p_Partition()->GetYpart();
+	double Xmax = Offset_X+GridX*dx;
+	double Ymax = Offset_Y+GridY*dy;
+
+	p = p_Trajectory;
+	Vmax = 0.0;
+	while (p)
+	{
+
+		xt = p-> x;
+		yt = p-> y;
+		Vx = p-> Vx;
+		Vy = p-> Vy;
+
+		//=================================================
+		//============Trajectory Outside Boundary =========
+		//=================================================
+		if(RankIdx_X ==1	& xt<=Offset_X)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_X == Xpa & xt>=Xmax)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_Y == 1	& yt<=Offset_Y)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_Y == Ypa & yt>=Ymax)
+		{ p = p->p_PrevTraj; continue;}
+
+		ddx = xt-(Offset_X-dx*0.5);
+		ddy = yt-(Offset_Y-dy*0.5);
+
+		i = floor(ddx/dx);
+		j = floor(ddy/dy);
+
+
+		wmm = (i+1-ddx/dx)*(j+1-ddy/dy);
+		wmp = (i+1-ddx/dx)*(ddy/dy-j);
+		wpm = (ddx/dx-i)*(j+1-ddy/dy);
+		wpp = (ddx/dx-i)*(ddy/dy-j);
+
+		Cell &cmm = GetCell(i,j,  	k);
+		Cell &cmp = GetCell(i,j+1,  k);
+		Cell &cpm = GetCell(i+1,j,  k);
+		Cell &cpp = GetCell(i+1,j+1,k);
+
+		Ex  = wmm*cmm.W_Ex  + wmp*cmp.W_Ex  + wpm*cpm.W_Ex  + wpp*cpp.W_Ex;
+		Ey  = wmm*cmm.W_Ey  + wmp*cmp.W_Ey  + wpm*cpm.W_Ey  + wpp*cpp.W_Ey;
+		Ez  = wmm*cmm.W_Ez  + wmp*cmp.W_Ez  + wpm*cpm.W_Ez  + wpp*cpp.W_Ez;
+
+		Psi   = wmm*cmm.W_Psi  + wmp*cmp.W_Psi  + wpm*cpm.W_Psi  + wpp*cpp.W_Psi;
+		Pondx = wmm*cmm.W_Ponx + wmp*cmp.W_Ponx + wpm*cpm.W_Ponx + wpp*cpp.W_Ponx;
+		Pondy = wmm*cmm.W_Pony + wmp*cmp.W_Pony + wpm*cpm.W_Pony + wpp*cpp.W_Pony;
+		
+		Asq   = wmm*cmm.W_Asq  + wmp*cmp.W_Asq  + wpm*cpm.W_Asq  + wpp*cpp.W_Asq;
+
+		gamma = 0.5*(1+Psi)*(Vx*Vx+Vy*Vy+1)+0.5*(1.0+0.5*Asq)/(1+Psi);
+		Fx = ((gamma*Ex-Pondx*0.25)/(1+Psi) - Vx*(Vx*Ex+Vy*Ey+Ez))/(1+Psi);
+		Fy = ((gamma*Ey-Pondy*0.25)/(1+Psi) - Vy*(Vx*Ex+Vy*Ey+Ez))/(1+Psi);
+
+		dztmp=dzz;
+		Vxp = p-> old_vx + Fx*dztmp*0.5;
+		Vyp = p-> old_vy + Fy*dztmp*0.5;
+
+		//==========================================
+		//=========== Adapteive Z Step =============
+		double Vr = sqrt(Vxp*Vxp+Vyp*Vyp);
+		if(AdaptiveStep>0 & Vr >=Vlim*AdaptiveStep)
+		{
+			Vxp = Vlim*AdaptiveStep*Vxp/Vr;
+			Vyp = Vlim*AdaptiveStep*Vyp/Vr;
+		}
+
+		p-> Vx = Vxp;
+		p-> Vy = Vyp;
+
+		p-> old_vx = Vxp;
+		p-> old_vy = Vyp;
+		
+		p-> Vxx = Vxp*Vxp;
+		p-> Vxy = Vxp*Vyp;
+		p-> Vyy = Vyp*Vyp;
+
+		p = p->p_PrevTraj;
+		double Vrr=sqrt(Vxp*Vxp+Vyp*Vyp);
+		if(Vrr>Vmax) Vmax = Vrr;
+
+	}
+	return;
+
+}
+
+
+void Mesh::PushTrajectory_HalfB(int k)
+{
+
+	Trajectory *p = NULL;
+	double ddx;
+	double ddy;
+	double Psi, Bx, By, Bz;
+	double Fx, Fy, gamma;
+
+	double xt, yt, Vx, Vy, Vxp, Vyp, xtp, ytp;
+	double wmm, wmp, wpm, wpp;
+	double dxdy = dx*dy;
+	double dztmp;
+	int i,j;
+
+	int Xpa  = p_domain()->p_Partition()->GetXpart();
+	int Ypa  = p_domain()->p_Partition()->GetYpart();
+	double Xmax = Offset_X+GridX*dx;
+	double Ymax = Offset_Y+GridY*dy;
+
+	p = p_Trajectory;
+	//====== for adpative z step========
+	Vmax = 0.0;
+	while (p)
+	{
+
+		xt = p-> x;
+		yt = p-> y;
+		Vx = p-> Vx;
+		Vy = p-> Vy;
+
+		//=================================================
+		//============Trajectory Outside Boundary =========
+		//=================================================
+		if(RankIdx_X ==1	& xt<=Offset_X)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_X == Xpa & xt>=Xmax)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_Y == 1	& yt<=Offset_Y)
+		{ p = p->p_PrevTraj; continue;}
+		if(RankIdx_Y == Ypa & yt>=Ymax)
+		{ p = p->p_PrevTraj; continue;}
+
+		ddx = xt-(Offset_X-dx*0.5);
+		ddy = yt-(Offset_Y-dy*0.5);
+
+		i = floor(ddx/dx);
+		j = floor(ddy/dy);
+
+		wmm = (i+1-ddx/dx)*(j+1-ddy/dy);
+		wmp = (i+1-ddx/dx)*(ddy/dy-j);
+		wpm = (ddx/dx-i)*(j+1-ddy/dy);
+		wpp = (ddx/dx-i)*(ddy/dy-j);
+
+		Cell &cmm = GetCell(i,j,  	k);
+		Cell &cmp = GetCell(i,j+1,  k);
+		Cell &cpm = GetCell(i+1,j,  k);
+		Cell &cpp = GetCell(i+1,j+1,k);
+
+		Bx  = wmm*cmm.W_Bx  + wmp*cmp.W_Bx  + wpm*cpm.W_Bx  + wpp*cpp.W_Bx;
+		By  = wmm*cmm.W_By  + wmp*cmp.W_By  + wpm*cpm.W_By  + wpp*cpp.W_By;
+		Bz  = wmm*cmm.W_Bz  + wmp*cmp.W_Bz  + wpm*cpm.W_Bz  + wpp*cpp.W_Bz;
+		Psi   = wmm*cmm.W_Psi  + wmp*cmp.W_Psi  + wpm*cpm.W_Psi  + wpp*cpp.W_Psi;
+		
+		Fx = (- Vy*Bz - By )/(1+Psi);
+		Fy = (  Vx*Bz + Bx )/(1+Psi);
+
+		dztmp=dzz;
+		Vxp = p-> old_vx + Fx*dztmp;
+		Vyp = p-> old_vy + Fy*dztmp;
+
+		//==========================================
+		//=========== Adapteive Z Step =============
+		double Vr = sqrt(Vxp*Vxp+Vyp*Vyp);
+		if(AdaptiveStep>0 & Vr >=Vlim*AdaptiveStep)
+		{
+			Vxp = Vlim*AdaptiveStep*Vxp/Vr;
+			Vyp = Vlim*AdaptiveStep*Vyp/Vr;
+		}
+
+		p-> old_vx = Vxp;
+		p-> old_vy = Vyp;
+		
+		p-> Vxx = Vxp*Vxp;
+		p-> Vxy = Vxp*Vyp;
+		p-> Vyy = Vyp*Vyp;
+
+		p = p->p_PrevTraj;
+
+		double Vrr=sqrt(Vxp*Vxp+Vyp*Vyp);
+		if(Vrr>Vmax) Vmax = Vrr;
+
+	}
+
+	return;
+
+}
+
 Trajectory* Mesh::Reconnect(Trajectory* p_Traj)
 {
 

@@ -247,7 +247,7 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
 
    trajorder=p_Meshes->GetPushOrder();
 
-   if(trajorder==1 || trajorder==2)
+   if(trajorder==0 || trajorder==1 || trajorder==2)
    {   
    }
    else
@@ -298,16 +298,17 @@ void Domain::Run()
 while(Time<Tmax)
 {
 
-
-
    if(Nbeam) p_Meshes -> BeamSource();
-
 
    //===================================
    //======== Push Wakefield in z=======
    k=0; k0=0; ierr=1;
    switch(trajorder)
    {
+      case 0:
+      while (k<ZGridN && ierr) { ierr = Boris(k0, k);};
+      break;
+
       case 1:
       while (k<ZGridN && ierr) { ierr = RK1(k0, k);};
       break;

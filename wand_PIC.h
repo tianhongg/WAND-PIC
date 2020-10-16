@@ -45,6 +45,7 @@
 #define COMMU_A 33
 #define COMMU_T 44
 #define COMMU_P 55
+#define COMMU_SO 120
 
 #define COMMU_MG_P 66
 #define COMMU_MG_S 77
