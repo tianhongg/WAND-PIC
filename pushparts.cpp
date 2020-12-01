@@ -244,6 +244,9 @@ void Mesh::PushParticle()
 				Byl = wmmm*cmmm2.L_By[NF] + wmpm*cmpm2.L_By[NF] + wpmm*cpmm2.L_By[NF] + wppm*cppm2.L_By[NF]
 					+ wmmp*cmmp2.L_By[NF] + wmpp*cmpp2.L_By[NF] + wpmp*cpmp2.L_By[NF] + wppp*cppp2.L_By[NF];
 
+				Bzl = wmmm*cmmm2.L_Bz[NF] + wmpm*cmpm2.L_Bz[NF] + wpmm*cpmm2.L_Bz[NF] + wppm*cppm2.L_Bz[NF]
+					+ wmmp*cmmp2.L_Bz[NF] + wmpp*cmpp2.L_Bz[NF] + wpmp*cpmp2.L_Bz[NF] + wppp*cppp2.L_Bz[NF];
+
 				OmegaL = p_domain()->OmegaL[NF];
 
 				ExlR += (Exl*exp(-ci*OmegaL*z)).real();
@@ -251,7 +254,7 @@ void Mesh::PushParticle()
 				EzlR += (Ezl*exp(-ci*OmegaL*z)).real();
 				BxlR += (Bxl*exp(-ci*OmegaL*z)).real();
 				BylR += (Byl*exp(-ci*OmegaL*z)).real();	
-				BzlR  =0.0;
+				BzlR += (Bzl*exp(-ci*OmegaL*z)).real();	
 			}
 
 			}

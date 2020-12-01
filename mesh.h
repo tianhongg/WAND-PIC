@@ -141,12 +141,13 @@ public:
    void   AddParticle(Particle*   p_Part);
 
 
-   void  MacroSource(bool exbeam, int k);
-   void AdjustSource(bool exbeam, int k);
+   void  MacroSource(int k);
+   void AdjustSource(int k);
    void AdjustFields(int k);
    void AdjustPsi(int k);
    void SetSourceZero(int k);
    void BeamSource();
+   void AdjustBSource();
    void SetBSourceZero();
    void SetFieldZeroAfter(int k);
 

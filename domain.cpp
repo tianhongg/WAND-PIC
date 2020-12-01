@@ -65,13 +65,6 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
       read(p_File);
    }
 
-   // char str_FileName[64];
-   // if(Rank==0)
-   // {
-   // sprintf(str_FileName,"Output.log");
-   // Rank_cout.open(str_FileName, std::ofstream::out);
-   // }
-
    //===============================================================
    //=======================Creating Partition======================
    //===============================================================
@@ -299,7 +292,7 @@ while(Time<Tmax)
 {
 
    if(Nbeam) p_Meshes -> BeamSource();
-
+   
    //===================================
    //======== Push Wakefield in z=======
    k=0; k0=0; ierr=1;

@@ -358,6 +358,48 @@ void Mesh::BeamSource()
 
 	}
 
+	AdjustBSource();
+
+	return;
+
+}
+
+void Mesh::AdjustBSource()
+{
+	int Xpa = p_domain()->p_Partition()->GetXpart();
+	int Ypa = p_domain()->p_Partition()->GetYpart();
+
+	for(int k=0; k<GridZ; k++)
+	{
+
+		//=====mm-corner======================
+		Cell &c1  = GetCell( 1,1,k);
+		Cell &co1 = GetCell( 0,0,k);
+
+		for (int i=SOU_DIM; i<SOU_DIM+BEA_DIM; i++)
+		{ c1.W_Source[i] += co1.W_Source[i]; }
+
+		//=====mp-corner======================
+		Cell &c2  = GetCell( 1,GridY,k);
+		Cell &co2 = GetCell( 0,GridY+1,k);
+
+		for (int i=SOU_DIM; i<SOU_DIM+BEA_DIM; i++)
+		{ c2.W_Source[i] += co2.W_Source[i]; }
+
+		//=====pm-corner======================
+		Cell &c3  = GetCell( GridX,1,k);
+		Cell &co3 = GetCell( GridX+1,0,k);
+
+		for (int i=SOU_DIM; i<SOU_DIM+BEA_DIM; i++)
+		{ c3.W_Source[i] += co3.W_Source[i]; }
+
+		//=====pp-corner======================
+		Cell &c4  = GetCell( GridX,GridY,k);
+		Cell &co4 = GetCell( GridX+1,GridY+1,k);
+
+		for (int i=SOU_DIM; i<SOU_DIM+BEA_DIM; i++)
+		{	c4.W_Source[i] += co4.W_Source[i]; }
+	}
 	return;
 
 }

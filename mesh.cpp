@@ -370,7 +370,9 @@ void Mesh::Ionization()
 						ExR += ( (wm*cm.L_Ex[NF]+wp*cp.L_Ex[NF]) *exp(-ci*OmegaL*z)).real();
 						EyR += ( (wm*cm.L_Ey[NF]+wp*cp.L_Ey[NF]) *exp(-ci*OmegaL*z)).real();
 						EzR += ( (wm*cm.L_Ez[NF]+wp*cp.L_Ez[NF]) *exp(-ci*OmegaL*z)).real();
-					}
+
+
+					}	
 					//===caculate ionization probability===
 					if(EL>1e-2)
 					{
@@ -389,7 +391,7 @@ void Mesh::Ionization()
 							p = new Electron(xtemp, ytemp, ztemp, 0.0, 0.0, 0.0, ExR, EyR, EzR, 1.0, weight);
 							c.InoState=0;
  						}
-				////////
+
 					}
 
 				}

@@ -122,10 +122,10 @@ class Domain : public NList{
     int RK1(double &k0, int &k);
     int RK2(double &k0, int &k);
     int Boris(double &k0, int &k);
-    int PushWakeFields(bool exbeam,   int k);
-    int PushWakeFieldsE(bool exbeam,  int k);
-    int PushWakeFieldsEz(bool exbeam, int k);
-    int PushWakeFieldsB(bool exbeam,  int k);
+    int PushWakeFields( int k);
+    int PushWakeFieldsE( int k);
+    int PushWakeFieldsEz( int k);
+    int PushWakeFieldsB( int k);
     int PushPulses(int k, int NF);
     void Run();
 

@@ -33,9 +33,9 @@ int Domain::RK2(double &k0, int &k)
 
    //================================
    //========  RK2  ======
-   if((ierr = PushWakeFields(true, k))) return 0;
+   if((ierr = PushWakeFields(k))) return 0;
    p_Meshes ->PushTrajectory(k0, k, 1);
-   if((ierr = PushWakeFields(false,k))) return 0;
+   if((ierr = PushWakeFields(k))) return 0;
    p_Meshes ->PushTrajectory(k0, k, 0);
 
    // p_Meshes ->AdjustZstep(k0, k);
@@ -43,8 +43,6 @@ int Domain::RK2(double &k0, int &k)
    //================================
    k  = ceil(k0 + dz2dz);
 	k0 = 	 (k0 + dz2dz); 
-
-
 
    //================================
    //================================
@@ -74,7 +72,7 @@ int Domain::RK1(double &k0, int &k)
 
    //================================
    //======== Push Wakefields  ======
-   if((ierr = PushWakeFields(true, k))) return 0;
+   if((ierr = PushWakeFields(k))) return 0;
    //================================
    //======== Push Trajectory  ======
    //======== and Exchange Traj =====
@@ -113,15 +111,15 @@ int Domain::Boris(double &k0, int &k)
    p_Meshes ->AdjustZstep(k0, k, dz2dz);
    //================================
    //======== Push Trajectory by E ======
-   if((ierr = PushWakeFieldsE(true,k))) return 0;
+   if((ierr = PushWakeFieldsE(k))) return 0;
    p_Meshes ->PushTrajectory_HalfE(k);
 
    //======== Push Wakefields B ======
-   if((ierr = PushWakeFieldsB(false, k))) return 0;
+   if((ierr = PushWakeFieldsB(k))) return 0;
    p_Meshes ->PushTrajectory_HalfB(k);
 
    //======== Push Trajectory by E ======
-   if((ierr = PushWakeFieldsEz(false,k))) return 0;
+   if((ierr = PushWakeFieldsEz(k))) return 0;
    p_Meshes ->PushTrajectory_HalfE(k);
 
    p_Meshes ->PushTrajectory_Half();
@@ -165,16 +163,14 @@ int Domain:: PushPulses(int k, int NF)
 }
 
 
-int Domain:: PushWakeFields(bool exbeam, int k)
+int Domain:: PushWakeFields(int k)
 {
    int ierr=0;
    //================================
    //========  Plasma Source  =======
-   p_Meshes -> MacroSource(exbeam,k);
+   p_Meshes -> MacroSource(k);
 
-
-   if(exbeam)  p_Comm   -> DoCommute(COMMU_S, k);
-   else        p_Comm   -> DoCommute(COMMU_SO, k);
+   p_Comm   -> DoCommute(COMMU_S, k);
 
    //========  Wake: Psi   ==========
    if( (ierr = p_Multi  -> MG_V_cycle(0, k)) )  return 1;
@@ -221,15 +217,14 @@ int Domain:: PushWakeFields(bool exbeam, int k)
 
 }
 
-int Domain:: PushWakeFieldsE(bool exbeam, int k)
+int Domain:: PushWakeFieldsE(int k)
 {
    int ierr=0;
    //================================
    //========  Plasma Source  =======
-   p_Meshes -> MacroSource(exbeam,k);
+   p_Meshes -> MacroSource(k);
 
-   if(exbeam)  p_Comm   -> DoCommute(COMMU_S, k);
-   else        p_Comm   -> DoCommute(COMMU_SO, k);
+   p_Comm   -> DoCommute(COMMU_S, k);
 
    //========  Wake: Psi   ==========
    if( (ierr = p_Multi  -> MG_V_cycle(0, k)) )  return 1;
@@ -259,15 +254,14 @@ int Domain:: PushWakeFieldsE(bool exbeam, int k)
 }
 
 
-int Domain:: PushWakeFieldsEz(bool exbeam, int k)
+int Domain:: PushWakeFieldsEz(int k)
 {
    int ierr=0;
    //================================
    //========  Plasma Source  =======
-   p_Meshes -> MacroSource(exbeam,k);
+   p_Meshes -> MacroSource(k);
 
-   if(exbeam)  p_Comm -> DoCommute(COMMU_S, k);
-   else        p_Comm -> DoCommute(COMMU_SO, k);
+   p_Comm -> DoCommute(COMMU_S, k);
    //================================
    //========  Wake: Ez    ==========
    if( (ierr = p_Multi  -> MG_V_cycle(1, k)) )  return 1;
@@ -277,15 +271,14 @@ int Domain:: PushWakeFieldsEz(bool exbeam, int k)
    return 0;
 }
 
-int Domain:: PushWakeFieldsB(bool exbeam, int k)
+int Domain:: PushWakeFieldsB(int k)
 {
    int ierr=0;
    //================================
    //========  Plasma Source  =======
-   p_Meshes -> MacroSource(exbeam,k);
+   p_Meshes -> MacroSource(k);
 
-   if(exbeam)  p_Comm -> DoCommute(COMMU_S, k);
-   else        p_Comm -> DoCommute(COMMU_SO, k);
+   p_Comm -> DoCommute(COMMU_S, k);
 
    //========  Wake: Bz    ==========
    if( (ierr = p_Multi  -> MG_V_cycle(2, k)) )  return 1;

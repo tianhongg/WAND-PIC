@@ -688,12 +688,9 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 			}
 			//====================multigrid===========
 		
-
 			break;
 
 		}
-
-
 
 	}
 

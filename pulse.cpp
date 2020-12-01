@@ -287,6 +287,9 @@ void Mesh::LaserFields()
    
             ccc.L_Ez[NF] = -0.125*( cxp.Acomx[NF]+  cxp.Acomxm[NF] -   cxm.Acomx[NF]-  cxm.Acomxm[NF]
                                  +cxpzp.Acomx[NF]+cxpzp.Acomxm[NF] - cxmzp.Acomx[NF]-cxmzp.Acomxm[NF])/dx;
+
+            ccc.L_Bz[NF] = -0.125*( cyp.Acomx[NF]+  cyp.Acomxm[NF] -   cym.Acomx[NF]-  cym.Acomxm[NF]
+                                 +cypzp.Acomx[NF]+cypzp.Acomxm[NF] - cymzp.Acomx[NF]-cymzp.Acomxm[NF])/dy;
             }
          //===============================
 
@@ -300,6 +303,9 @@ void Mesh::LaserFields()
 
             ccc.L_Ez[NF]+= -0.125*( cyp.Acomy[NF]+  cyp.Acomym[NF] -   cym.Acomy[NF]-  cym.Acomym[NF]
                                  +cypzp.Acomy[NF]+cypzp.Acomym[NF] - cymzp.Acomy[NF]-cymzp.Acomym[NF])/dy;
+
+            ccc.L_Bz[NF]+=  0.125*( cxp.Acomy[NF]+  cxp.Acomym[NF] -   cxm.Acomy[NF]-  cxm.Acomym[NF]
+                                 +cxpzp.Acomy[NF]+cxpzp.Acomym[NF] - cxmzp.Acomy[NF]-cxmzp.Acomym[NF])/dx;
             }
           }
          //===============================

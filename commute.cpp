@@ -200,7 +200,7 @@ void Commute::DoCommute(int what, int k)
 	//unpack the fields or source.
 	UnPack(what, k);
 
-	kold=k;
+
 
 	return;
 
@@ -300,7 +300,7 @@ void Commute::DoPack(int what, int k)
 		case COMMU_SO:
 
 		int NSource=SOU_DIM;
-		if(p_domain()->Get_Nbeam()>0&&kold!=k&&what==COMMU_S) NSource=SOU_DIM+BEA_DIM;
+		if(p_domain()->Get_Nbeam()>0&&kold!=k) NSource=SOU_DIM+BEA_DIM;
 		
 		// Put the Sources at the Overlapping Cells into Send Array;
 		// Send Direction: Y: up and down
@@ -531,7 +531,11 @@ void Commute::UnPack(int what, int k)
 		case COMMU_S:
 		case COMMU_SO:
 		int NSource=SOU_DIM;
-		if(p_domain()->Get_Nbeam()>0&&kold!=k&&what==COMMU_S) NSource=SOU_DIM+BEA_DIM;
+		if(p_domain()->Get_Nbeam()>0&&kold!=k) 
+		{
+			NSource=SOU_DIM+BEA_DIM;
+			kold=k;
+		}
 		// Pull sources from the Rece Array, and add on the edging cells ;
 		// Receive Direction: Y
 		for (m = 0; m<=1; m++)
