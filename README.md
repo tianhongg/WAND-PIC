@@ -1,6 +1,8 @@
 # WAND-PIC
 ![logo](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Logo.png)
 
+()
+
 
 **W**akefield **A**cceleration a**n**d **D**irect-laser acceleration -- **P**article **i**n **C**ell Simulation.
 
@@ -16,7 +18,6 @@ You are welcome to clone or download this repository. :smile: Please also send a
 * In-house parallel Multigrid Solver. One for all equations.
 * Sub-cycling of macro beam particles, captures sophisticated wave-particle resonant interaction.
 * Parallel output and reload.
-* Modularity and Scalability.
 
 ###  Structure
 ![logo](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Code_Stru.png)

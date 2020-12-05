@@ -137,6 +137,8 @@ public:
 	double P_Sizey;
 	double P_Sizez;
 
+	double P_deltaZ;
+
 
 	double P_px0;
 	double P_py0;

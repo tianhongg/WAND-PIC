@@ -1190,7 +1190,7 @@ void MultiGrid::Relaxation(int field, int layer, int where)
 
 			for (j=1; j<=ny; j++)
 			{
-				for (i=1; i<=ny; i++)
+				for (i=1; i<=nx; i++)
 				{
 					MG_Cell &ccc = GetMGCell(i,   j, layer);
 					MG_Cell &cxm = GetMGCell(i-1, j, layer);

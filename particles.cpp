@@ -84,6 +84,7 @@ Specie::Specie(char *name, FILE *f) : NList(name)
 	AddEntry("Profile", &P_profile, 0);
 	AddEntry("Density", &density, 1.0);
 
+
 	AddEntry("Part_per_Cellx", &PpCellx, 1);
 	AddEntry("Part_per_Celly", &PpCelly, 1);
 	AddEntry("Part_per_Cellz", &PpCellz, 1);
@@ -96,6 +97,8 @@ Specie::Specie(char *name, FILE *f) : NList(name)
 	AddEntry("Sizex", &P_Sizex, 1.);
 	AddEntry("Sizey", &P_Sizey, 1.);
 	AddEntry("Sizez", &P_Sizez, 1.);
+
+	AddEntry("deltaZ",  &P_deltaZ, 0.5);
 
 	AddEntry("Px0", &P_px0, 0.0);
 	AddEntry("Py0", &P_py0, 0.0);
@@ -159,6 +162,17 @@ double Specie::Density(double x0, double y0, double z0)
 			if( abs(x0-P_Centerx)*2<P_Sizex && abs(y0-P_Centery)*2<P_Sizey && abs(z0-P_Centerz)*2<P_Sizez )
 			{
 				return 1;
+			}
+
+			return 0;
+		break;
+
+		// transversely rectangle and longitudinally trapezoid
+		case 3:
+
+			if( abs(x0-P_Centerx)*2<P_Sizex && abs(y0-P_Centery)*2<P_Sizey && abs(z0-P_Centerz)*2<P_Sizez )
+			{
+				return (P_deltaZ-1)/P_Sizez*(z0-P_Centerz)+(P_deltaZ+1)/2.0;
 			}
 
 			return 0;
