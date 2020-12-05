@@ -1,7 +1,7 @@
 # WAND-PIC
 ![logo](https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Logo.png)
 
-()
+**(This is the alpha release of WAND-PIC, some parts are not completely developed and still under testing. Please report an issue if you see errors, and any resulting instability. Thanks!)**
 
 
 **W**akefield **A**cceleration a**n**d **D**irect-laser acceleration -- **P**article **i**n **C**ell Simulation.
