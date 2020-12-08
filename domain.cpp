@@ -349,9 +349,18 @@ while(Time<Tmax)
    if(Time>=OutDt*nc)
    {
       if(savedim==0)
-      {Save(nc);}
+      {
+         Save(nc);
+      }
+      else if(savedim==1 || savedim==2)
+      {
+         Save2D(nc,savedim,true);
+      }
       else
-      {Save2D(nc,savedim);}
+      {
+         Save2D(nc,1,true);
+         Save2D(nc,2,false);
+      }
 
       nc++;
       duration=(std::clock()-start)/(double)CLOCKS_PER_SEC/60;
@@ -371,13 +380,10 @@ while(Time<Tmax)
    p_Meshes ->ResetPlasma();
    //===========================
 
-   
 }
 
 //============= Main Routine ===========
 //======================================
-
-
    return;
 }
 

@@ -307,7 +307,7 @@ int Domain::Save(int nt)
 
 
 
-int Domain::Save2D(int nt, int savedim)
+int Domain::Save2D(int nt, int savedim, bool part)
 {
 
 	char sFile[128];
@@ -459,7 +459,18 @@ int Domain::Save2D(int nt, int savedim)
 
 	//========================================
 	//========= Create nc File ===============
-	sprintf(sFile,"Fields2d_%d.nc",nt);
+	switch(savedim)
+	{
+		case 1:
+		sprintf(sFile,"Fields2d_XZ_%d.nc",nt);
+		break;
+
+		case 2:
+		sprintf(sFile,"Fields2d_YZ_%d.nc",nt);
+		break;
+	}
+
+
 	if((retval = ncmpi_create(MPI_COMM_WORLD, sFile, NC_CLOBBER|NC_64BIT_OFFSET, info, &ncid)) ) 
 	{
     	if(Rank==0) std::cout<< "Domain: pnetcdf error:" << retval << " while creating " << sFile << "." <<'\n';
@@ -684,11 +695,11 @@ int Domain::Save2D(int nt, int savedim)
 	}
 
 
-	
-	if(Nbeam) SaveP(nt);
-
-	SaveXray(nt);
-
+	if(part)
+	{
+		if(Nbeam) SaveP(nt);
+		SaveXray(nt);
+	}
 	return 0;
 
 }

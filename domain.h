@@ -139,7 +139,7 @@ class Domain : public NList{
 
 
     int  Save(int nt);
-    int  Save2D(int nt, int savedim);
+    int  Save2D(int nt, int savedim, bool part);
     int  SaveP(int nt);
     int  SaveXray(int nt);
     int  LoadPulse(int nt);
