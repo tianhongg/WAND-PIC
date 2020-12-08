@@ -1349,7 +1349,7 @@ int  Domain::LoadParti(int nt)
 			double   *Ex0_P, *Ey0_P, *Ez0_P;
 			double   *Wxw_P, *Wyw_P, *Wzw_P;
 			double   *Wxl_P, *Wyl_P, *Wzl_P;
-			double   *Weight_P;
+			double   *q2m_P, *Weight_P;
 
 			x_P  = new double[Npart];
 			y_P  = new double[Npart];  
@@ -1370,6 +1370,8 @@ int  Domain::LoadParti(int nt)
 			Wxl_P = new double[Npart];
 			Wyl_P = new double[Npart];
 			Wzl_P = new double[Npart];
+
+			q2m_P = new double[Npart];
 			Weight_P = new double[Npart];
 
 			fstart[0]=SCAll[Rank][0];
@@ -1399,8 +1401,8 @@ int  Domain::LoadParti(int nt)
 			if ( (retval = ncmpi_get_vara_double_all(ncid, Wyl_id, fstart, fcount, &Wyl_P[0])))  return NC_ERR;
 			if ( (retval = ncmpi_get_vara_double_all(ncid, Wzl_id, fstart, fcount, &Wzl_P[0])))  return NC_ERR;
 
+			if ( (retval = ncmpi_get_vara_double_all(ncid, q2m_id, fstart, fcount, &q2m_P[0])))  return NC_ERR;
 			if ( (retval = ncmpi_get_vara_double_all(ncid, wei_id, fstart, fcount, &Weight_P[0])))  return NC_ERR;
-
 
 
 			for(int i=0;i<Npart;i++)
@@ -1423,6 +1425,22 @@ int  Domain::LoadParti(int nt)
 					p->Wyl = Wyl_P[i];
 					p->Wzl = Wzl_P[i];
 					break;
+
+					case ION:
+					p = new Ion(x0_P[i], y0_P[i], z0_P[i], px_P[i], py_P[i], pz_P[i], Ex0_P[i], Ey0_P[i], Ez0_P[i], q2m_P[i], Weight_P[i]);
+					p->x=x_P[i];
+					p->y=y_P[i];
+					p->z=z_P[i];
+
+					p->Wxw = Wxw_P[i];
+					p->Wyw = Wyw_P[i];
+					p->Wzw = Wzw_P[i];
+
+					p->Wxl = Wxl_P[i];
+					p->Wyl = Wyl_P[i];
+					p->Wzl = Wzl_P[i];
+					break;
+
 				}
 			}
 

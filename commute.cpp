@@ -975,6 +975,8 @@ void Commute::UnPackT(int what, int Recexm, int Recexp, int Receym, int Receyp)
 			break;
 
 			case ION:
+			pp = new Ion(x0, y0, z0, px, py, pz,
+							Ex0, Ey0, Ez0, q2m, weight);
 			break;
 			}
 
@@ -1016,6 +1018,8 @@ void Commute::UnPackT(int what, int Recexm, int Recexp, int Receym, int Receyp)
 			break;
 
 			case ION:
+			pp = new Ion(x0, y0, z0, px, py, pz,
+							Ex0, Ey0, Ez0, q2m, weight);
 			break;
 			}
 
@@ -1054,6 +1058,8 @@ void Commute::UnPackT(int what, int Recexm, int Recexp, int Receym, int Receyp)
 			break;
 
 			case ION:
+			pp = new Ion(x0, y0, z0, px, py, pz,
+							Ex0, Ey0, Ez0, q2m, weight);
 			break;
 			}
 
@@ -1084,6 +1090,7 @@ void Commute::UnPackT(int what, int Recexm, int Recexp, int Receym, int Receyp)
 			type=(int)ReceSourceYp[n*SDP_DIM +12];
 			q2m=      ReceSourceYp[n*SDP_DIM +13];
 			weight =  ReceSourceYp[n*SDP_DIM +14];
+			
 			switch(type)
 			{
 			case ELECTRON:
@@ -1092,6 +1099,8 @@ void Commute::UnPackT(int what, int Recexm, int Recexp, int Receym, int Receyp)
 			break;
 
 			case ION:
+			pp = new Ion(x0, y0, z0, px, py, pz,
+							Ex0, Ey0, Ez0, q2m, weight);
 			break;
 			}
 

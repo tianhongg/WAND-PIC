@@ -148,6 +148,8 @@ public:
 	double pyspread;
 	double pzspread;
 
+	double p_q2m;
+
 public:
 
 	double Density(double x0, double y0, double z0);

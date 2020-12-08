@@ -50,7 +50,7 @@ Electron::Electron(double x0p,  double y0p,  double z0p,
 				   double pxp,  double pyp,  double pzp,
   			 	   double Ex0p, double Ey0p, double Ez0p,
   			 	   double q2mp, double weightp)
-		:Particle(x0p, y0p, z0p, pxp, pyp, pzp, Ex0p,Ey0p,Ez0p, q2mp,weightp)
+		:Particle(x0p, y0p, z0p, pxp, pyp, pzp, Ex0p,Ey0p,Ez0p,q2mp,weightp)
 {
 	type = ELECTRON;
 	Q    = 1.0;
@@ -62,7 +62,7 @@ Ion::Ion(double x0p,  double y0p,  double z0p,
 		 double pxp,  double pyp,  double pzp,
 		 double Ex0p, double Ey0p, double Ez0p,
 		 double q2mp, double weightp)
-		:Particle(x0p, y0p, z0p, pxp, pyp, pzp, Ex0p,Ey0p,Ez0p, q2mp,weightp)
+		:Particle(x0p, y0p, z0p, pxp, pyp, pzp, Ex0p,Ey0p,Ez0p,q2mp,weightp)
 {
 	type = ION;
 	Q    = -1.0;
@@ -84,6 +84,7 @@ Specie::Specie(char *name, FILE *f) : NList(name)
 	AddEntry("Profile", &P_profile, 0);
 	AddEntry("Density", &density, 1.0);
 
+	AddEntry("Q2M", &p_q2m, 1.0);
 
 	AddEntry("Part_per_Cellx", &PpCellx, 1);
 	AddEntry("Part_per_Celly", &PpCelly, 1);
@@ -128,7 +129,6 @@ double Specie::Density(double x0, double y0, double z0)
 
 	switch(P_profile)
 	{
-
 		// Gaussian ellipsoid
 		case 0:
 			arg += (x0-P_Centerx)*(x0-P_Centerx)/P_Sizex/P_Sizex;
@@ -247,7 +247,7 @@ void Mesh::SeedParticles(Specie *specie)
 					switch(P_type)
 					{
 						case ELECTRON:
-							q2m = 1.0;
+							q2m = specie->p_q2m;
 							weight = Den/wtemp;
 							px = specie->P_px0 + rand_gaussian (specie->pxspread);
 							py = specie->P_py0 + rand_gaussian (specie->pyspread);
@@ -259,7 +259,14 @@ void Mesh::SeedParticles(Specie *specie)
 						break;
 
 						case ION:
-							//p = new Ion();
+							q2m = specie->p_q2m;
+							weight = Den/wtemp;
+							px = specie->P_px0 + rand_gaussian (specie->pxspread);
+							py = specie->P_py0 + rand_gaussian (specie->pyspread);
+							pz = specie->P_pz0 + rand_gaussian (specie->pzspread);
+							Ex0 = Ey0 = Ez0 = 0.0;
+							p = new Ion(x0, y0, z0, px, py, pz,
+											Ex0, Ey0, Ez0, q2m, weight);
 						break;
 
 					}

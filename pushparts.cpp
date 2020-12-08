@@ -322,7 +322,7 @@ void Mesh::PushParticle()
 			//======================================	
 			// Raidation Calculation
 			//
-			if(XRayDetector->IfRadiation==1 && gamma>2 && pz>0)
+			if(XRayDetector->IfRadiation==1 &&type==ELECTRON && gamma>2 && pz>0)
 			{
 
 				theta_x = px/pz;
@@ -530,7 +530,7 @@ void Mesh::ExchangeP()
 			printf("==== Mesh: At Rank: %5d. ==================\n",Rank);
 			std::cout << "==== Mesh: Send Too Many Particles.      ====\n";
 			std::cout << "==== Mesh: May Cause Memory Problems.    ====\n";
-			printf("==== Mesh: Try Buf Size: %3d           ====\n",maxsend);
+			printf("==== Mesh: Try Buf Size: %3d           ====\n",maxsend/GridX);
 			
 		}
 
