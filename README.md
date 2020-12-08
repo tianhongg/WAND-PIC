@@ -4,7 +4,7 @@
 **(This is the alpha release of WAND-PIC, some parts are not completely developed and still under testing. Please report an issue if you see errors, and any resulting instability. Thanks!)**
 
 
-**W**akefield **A**cceleration a**n**d **D**irect-laser acceleration -- **P**article **i**n **C**ell Simulation.
+**W**akefield **A**cceleratio**N** and **D**irect-laser acceleration -- **P**article **i**n **C**ell Simulation.
 
 **WAND-PIC** is a 3D parallel quasi-static particle-in-cell simulation code. Developed by Tianhong Wang in 2019, at Dr. Gennady Shvets' Group, Cornell University.
 
