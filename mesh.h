@@ -36,7 +36,7 @@ private:
    
    Domain *p_domain() {return Domain::p_Domain;}; // pointer to domain class.
 
-   double dx, dy, dz, dt;
+   double dx, dy, dz, dt, dt0;
    double dzz;
 
 
@@ -81,6 +81,8 @@ private:
    Trajectory*  p_Trajectory;
    Particle*    p_Particle;
    Detector*    XRayDetector;
+
+   double minGamma; // Smallest Gamma in domain
    
 public:
 
@@ -88,7 +90,8 @@ public:
    double PlateauBegin;
    double PlasmaBegin; 
    double PlateauEnd; 
-   double PlasmaEnd;   
+   double PlasmaEnd; 
+   double PlasRadius;  
 
 
    int GetRankIdx_X() {return RankIdx_X;};
@@ -180,13 +183,14 @@ public:
       return TpCelly;
    }
 
-   double    ProfileLongi(double xt, double yt, double zt);
-   double    ProfileTrans(double xt, double yt, double zt);
+   double ProfileLongi(double xt, double yt, double zt);
+   double ProfileTrans(double xt, double yt, double zt);
    void PushTrajectory(double k0, int k, int step);
    void PushTrajectory_Half();
    void PushTrajectory_HalfE(int k);
    void PushTrajectory_HalfB(int k);
    void PushParticle();
+   void SetNewTimeStep();
    void AdjustZstep(double k0, int k, double &dz2dz);
    void ExchangeT();
    void ExchangeP();

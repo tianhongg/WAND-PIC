@@ -57,6 +57,8 @@ class Domain : public NList{
     double dz;
     double dt;
 
+    int Adap_dt;
+
     int Ndt;
 
     double Xmax;
@@ -104,6 +106,7 @@ class Domain : public NList{
     double Get_dy() {return dy;};
     double Get_dz() {return dz;};
     double Get_dt() {return dt;};
+    void set_new_dt(double newdt) {dt=newdt;};
     
     int Get_SubCycle() {return Ndt;};
 

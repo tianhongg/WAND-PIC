@@ -40,7 +40,11 @@ Mesh::Mesh(int XGridN, int YGridN, int ZGridN, FILE *f): NList ("Plasma")
 	dy = p_domain()->Get_dy();
 	dz = p_domain()->Get_dz();
 	dt = p_domain()->Get_dt();
+
+	dt0 = dt;
 	dzz = dz;
+
+	minGamma=1.0;
 
 	GridX = XGridN;
 	GridY = YGridN;
@@ -107,6 +111,7 @@ Mesh::Mesh(int XGridN, int YGridN, int ZGridN, FILE *f): NList ("Plasma")
   	AddEntry((char*)"PlasmaBegin",	&PlasmaBegin, 0);
   	AddEntry((char*)"PlateauEnd",	&PlateauEnd,  1e10);
   	AddEntry((char*)"PlasmaEnd",	&PlasmaEnd,	  1e10);
+  	AddEntry((char*)"PlasRadius",	&PlasRadius,100.0);
 
 
 
@@ -133,8 +138,6 @@ Mesh::Mesh(int XGridN, int YGridN, int ZGridN, FILE *f): NList ("Plasma")
 
   	// Radiation Detector
   	XRayDetector = new Detector(f);
-
-
 
 }
 

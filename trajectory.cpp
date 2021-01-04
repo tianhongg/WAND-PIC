@@ -86,9 +86,20 @@ double Mesh::ProfileLongi(double xt, double yt, double zt)
 
 
 double Mesh::ProfileTrans(double xt, double yt, double zt)
-   {
-   	return 1.0;
-   }; 
+{
+
+
+    switch(PProfileT)
+    {
+
+        case 1:
+        if (xt*xt+yt*yt>PlasRadius*PlasRadius) return 0.0;
+        break;
+
+    }
+
+    return 1.0;
+}; 
 
 
 

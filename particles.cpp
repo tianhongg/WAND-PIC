@@ -179,6 +179,46 @@ double Specie::Density(double x0, double y0, double z0)
 		break;
 
 
+		// Transvesely gaussian and longitudinally high-order poly;
+		case 4:
+            arg += (x0-P_Centerx)*(x0-P_Centerx)/P_Sizex/P_Sizex;
+            arg += (y0-P_Centery)*(y0-P_Centery)/P_Sizey/P_Sizey;
+            double arg2=0.0;
+
+            if(z0-P_Centerz<0) return 0;
+
+            arg2=1.0/(pow((z0-P_Centerz)/P_Sizez,P_order)+1);
+
+            if(arg<4.0&&arg2>0.01)
+            {
+                    return exp(-arg)*arg2;
+            }
+
+            return 0;
+
+        break;
+
+
+        // Transves Donut-like
+        case 5:
+        	double r0=sqrt(x0*x0+y0*y0);
+            arg += (r0-P_Centerx)*(r0-P_Centerx)/P_Sizex/P_Sizex;
+            arg += (z0-P_Centerz)*(z0-P_Centerz)/P_Sizez/P_Sizez;
+      		
+            if(arg<4.0)
+			{
+				return exp(-arg);
+			}
+
+			return 0;
+
+        break;
+
+
+
+
+
+
 	}
 
 	return 0.0;

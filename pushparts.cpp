@@ -88,6 +88,8 @@ void Mesh::PushParticle()
 	double dphi   =2*PhiMax/NPhi;
 	double domega =(OmegaMax-OmegaMin)/NOmega;  //in KeV
 
+	double minga=1e20;
+
 
 	p = p_Particle;
 
@@ -374,13 +376,27 @@ void Mesh::PushParticle()
 
 		p-> gamma = gamma;
 
+		if(pz>2&&gamma<minga) minga=gamma;
+
 		p = p->p_PrevPart;
 
 	}
 
+	minGamma=minga;
+
 	ExchangeP();
 
 	return;
+}
+
+
+void Mesh::SetNewTimeStep()
+{
+	double gmin;
+	MPI_Allreduce(&minGamma, &gmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	dt= dt0*sqrt(gmin);
+	p_domain()->set_new_dt(dt);
+
 }
 
 

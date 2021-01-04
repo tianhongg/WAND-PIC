@@ -39,6 +39,7 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
    AddEntry((char*)"ZStep",		&dz,	1.0);
 
    AddEntry((char*)"TStep",		&dt,	1.0);
+   AddEntry((char*)"AdaptiveDt", &Adap_dt,  0);
    AddEntry((char*)"SubCycle",   &Ndt, 1  );
 
    AddEntry((char*)"XLength", 	&Xmax,	10.0);
@@ -126,7 +127,9 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
          sprintf(name,"Pulse%d",i);
          pp_Pulses[i] = new Pulse(name, p_File);
       }
-      if (rank==0)  std::cout << "==== Domain: Pulses Parameters Are Read. ====\n";      
+      if (rank==0)  std::cout << "==== Domain: Pulses Parameters Are Read. ====\n";
+      if (rank==0)  std::cout << "==== Domain: Adaptive TimeStep Disabled. ====\n";        
+      Adap_dt=0;  
 
    }
    else 
@@ -339,9 +342,18 @@ while(Time<Tmax)
    //==================save==============
    duration=(std::clock()-start)/(double)CLOCKS_PER_SEC/60;
    if(Rank==0) printf("==== Step: %8d ----  %7.3f Mins.  ====\n",n,duration);
+   if(Nbeam&&Adap_dt&&Rank==0) printf("==== Current dt: %12.3f kp^-1.     ====\n",dt);
    Time += dt;
    n++;
    //===========================
+
+
+   //=====adpative time step====
+   if(Nbeam&&Adap_dt) p_Meshes -> SetNewTimeStep();
+
+   //===========================
+
+
 
 
    //===========================
