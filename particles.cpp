@@ -99,6 +99,7 @@ Specie::Specie(char *name, FILE *f) : NList(name)
 	AddEntry("Sizey", &P_Sizey, 1.);
 	AddEntry("Sizez", &P_Sizez, 1.);
 
+	AddEntry("Order",  &P_order, 2);
 	AddEntry("deltaZ",  &P_deltaZ, 0.5);
 
 	AddEntry("Px0", &P_px0, 0.0);

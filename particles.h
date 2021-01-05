@@ -137,6 +137,8 @@ public:
 	double P_Sizey;
 	double P_Sizez;
 
+
+	int P_order;
 	double P_deltaZ;
 
 
