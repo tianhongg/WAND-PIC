@@ -221,7 +221,6 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
          pp_Species[0]->density=0;
          AddSpecie(0);
 
-
       }
       pp_Species = NULL;
       if (rank==0)  std::cout << "==== Domain: No Beam In Domain.          ====\n";

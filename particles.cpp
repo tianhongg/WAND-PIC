@@ -216,10 +216,6 @@ double Specie::Density(double x0, double y0, double z0)
         break;
 
 
-
-
-
-
 	}
 
 	return 0.0;

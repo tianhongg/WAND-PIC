@@ -64,13 +64,13 @@ void Mesh::PushTrajectory(double k0, int k, int step)
 		//============Trajectory Outside Boundary =========
 		//=================================================
 		if(RankIdx_X ==1	& xt<=Offset_X)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_X == Xpa & xt>=Xmax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == 1	& yt<=Offset_Y)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == Ypa & yt>=Ymax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		//==================================================
 
 
@@ -205,13 +205,13 @@ void Mesh::PushTrajectory_Half()
 		//============Trajectory Outside Boundary =========
 		//=================================================
 		if(RankIdx_X ==1	& xt<=Offset_X)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_X == Xpa & xt>=Xmax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == 1	& yt<=Offset_Y)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == Ypa & yt>=Ymax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		//==================================================
 
 		// Push  position only......
@@ -270,13 +270,13 @@ void Mesh::PushTrajectory_HalfE(int k)
 		//============Trajectory Outside Boundary =========
 		//=================================================
 		if(RankIdx_X ==1	& xt<=Offset_X)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_X == Xpa & xt>=Xmax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == 1	& yt<=Offset_Y)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == Ypa & yt>=Ymax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 
 		ddx = xt-(Offset_X-dx*0.5);
 		ddy = yt-(Offset_Y-dy*0.5);
@@ -377,13 +377,13 @@ void Mesh::PushTrajectory_HalfB(int k)
 		//============Trajectory Outside Boundary =========
 		//=================================================
 		if(RankIdx_X ==1	& xt<=Offset_X)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_X == Xpa & xt>=Xmax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == 1	& yt<=Offset_Y)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 		if(RankIdx_Y == Ypa & yt>=Ymax)
-		{ p = p->p_PrevTraj; continue;}
+		{ p->Vx = p->Vy = p->Vxx = p->Vyy = p->Vxy=0; p = p->p_PrevTraj; continue;}
 
 		ddx = xt-(Offset_X-dx*0.5);
 		ddy = yt-(Offset_Y-dy*0.5);

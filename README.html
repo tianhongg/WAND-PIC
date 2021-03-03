@@ -1057,22 +1057,22 @@ body .markdown-body
 .codehilite .gc{color:#999;background-color:#EAF2F5}
 </style><title>README</title></head><body><article class="markdown-body"><h1 id="wand-pic">WAND-PIC<a class="headerlink" href="#wand-pic" title="Permanent link"></a></h1>
 <p><img alt="logo" src="https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Logo.png" /></p>
-<p><strong>W</strong>akefield <strong>A</strong>cceleration a<strong>n</strong>d <strong>D</strong>irect-laser acceleration &ndash; <strong>P</strong>article <strong>i</strong>n <strong>C</strong>ell Simulation.</p>
+<p><strong>(This is the alpha release of WAND-PIC, some parts are not completely developed and still under testing. Please report an issue if you see errors, and any resulting instability. Thanks!)</strong></p>
+<p><strong>W</strong>akefield <strong>A</strong>cceleratio<strong>N</strong> and <strong>D</strong>irect-laser acceleration &ndash; <strong>P</strong>article <strong>i</strong>n <strong>C</strong>ell Simulation.</p>
 <p><strong>WAND-PIC</strong> is a 3D parallel quasi-static particle-in-cell simulation code. Developed by Tianhong Wang in 2019, at Dr. Gennady Shvets&rsquo; Group, Cornell University.</p>
 <p>You are welcome to clone or download this repository. <img align="absmiddle" alt=":smile:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" title=":smile:" width="20px" /> Please also send an email to the author Tianhong Wang(<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#119;&#52;&#55;&#52;&#64;&#99;&#111;&#114;&#110;&#101;&#108;&#108;&#46;&#101;&#100;&#117;">&#116;&#119;&#52;&#55;&#52;&#64;&#99;&#111;&#114;&#110;&#101;&#108;&#108;&#46;&#101;&#100;&#117;</a>). We&rsquo;d like to keep track of user numbers and affiliations.
 <img alt="plot" src="https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Example_plot2.png" /></p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link"></a></h2>
 <ul>
 <li>2D partitioning of the transverse domain.</li>
-<li>Adjustive longitudinal step according to the speed of plasma trajectories.</li>
+<li>Adaptive longitudinal mesh refinement according to the speed of plasma trajectories.</li>
 <li>Advanced quasi-static equations, there is no need of &ldquo;predictor-corrector&rdquo; scheme.</li>
 <li>In-house parallel Multigrid Solver. One for all equations.</li>
 <li>Sub-cycling of macro beam particles, captures sophisticated wave-particle resonant interaction.</li>
 <li>Parallel output and reload.</li>
-<li>Modularity and Scalability.</li>
 </ul>
 <h3 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link"></a></h3>
-<p><img alt="logo" src="https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Code_Stru.png" /></p>
+<p><img alt="image info" src="https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Code_Stru.png" /></p>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link"></a></h2>
 <ul>
 <li>
@@ -1086,9 +1086,6 @@ body .markdown-body
 </pre></div></p>
 </li>
 <li>
-<p>A Brain. <img align="absmiddle" alt=":thought_balloon:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4ad.png" title=":thought_balloon:" width="20px" /></p>
-</li>
-<li>
 <p>A Good Weather. <img align="absmiddle" alt=":sun_with_face:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f31e.png" title=":sun_with_face:" width="20px" /></p>
 </li>
 <li>
@@ -1096,7 +1093,7 @@ body .markdown-body
 </li>
 </ul>
 <h2 id="compiling">Compiling<a class="headerlink" href="#compiling" title="Permanent link"></a></h2>
-<p>A simple &amp; working Makefile is included <a href="/Users/Patdan/Google%20Drive/Documents/MyWork/New_Wake_3D_Parallel_Project/WANDPIC_CODE/WANDPIC_Oct11_Particles_Multi_Freq_Ionization_Ramp_Restart/Makefile">Makefile</a>. The &lsquo;make&rsquo; should work on most machines, and your are welcome to write your own one.</p>
+<p>A simple &amp; working Makefile is included <a href="/Users/tianhongwang/Google%20Drive/Documents/MyWork/New_Wake_3D_Parallel_Project/WANDPIC_CODE/WANDPIC_Oct11_Particles_Multi_Freq_Ionization_Ramp_Restart_git/Makefile">Makefile</a>. The &lsquo;make&rsquo; should work on most machines, and your are welcome to write your own one.</p>
 <h3 id="tested-environment">Tested Environment<a class="headerlink" href="#tested-environment" title="Permanent link"></a></h3>
 <p><strong>WAND-PIC</strong> has been tested on four different server/supercomputers, from few cores to over 4000 cores, including:</p>
 <ul>
@@ -1120,28 +1117,34 @@ body .markdown-body
 <p>Example: running on a server with 36 cores
 <div class="codehilite"><pre>mpiexec -n 36 ./WAND
 </pre></div></p>
+<h2 id="simulation-example">Simulation Example<a class="headerlink" href="#simulation-example" title="Permanent link"></a></h2>
+<p><strong>Intense Laser Pulse Propagates in the Tenuous Plasma</strong> 
+<img alt="logo" src="https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Example_LWFA.gif" /></p>
+<p><strong>Long Electron Beam Propagates in the Tenuous Plasma (Hosing Instability)</strong> 
+<img alt="logo" src="https://github.com/tianhongg/WAND-PIC/blob/master/Resource/Example_PWFA.gif" /></p>
 <h2 id="developing">Developing<a class="headerlink" href="#developing" title="Permanent link"></a></h2>
-<p>I started to work on this project in early 2019, partially for fun and personal entertainment, did everything from scratch. And I am currently the only author of this project<img align="absmiddle" alt=":scream_cat:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f640.png" title=":scream_cat:" width="20px" />. Due to the lack of workforce and limited energy &amp; time, I may improve and update the code slowly in the future<img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" /><img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" /><img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" /><img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" />. Hidden bugs are waiting to be found, and many functions/modules need to be added.
-This version of WAND-PIC is the first version I finished recently (around July-2019) and it’s already been used in several research. During the development of WAND-PIC, I am trying to keep as less dependency as possible and the pnetcdf is the only lib I use. I made some compromises on some issues which need better treatment. Some part of the code are still under developing, for example, the Multigrid class, it needs further testing and improving.
+<p>I started to work on this project in early 2019 and I am currently the only author of this project<img align="absmiddle" alt=":scream_cat:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f640.png" title=":scream_cat:" width="20px" />. Due to the lack of workforce and limited energy &amp; time, I may improve and update the code slowly in the future<img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" /><img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" /><img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" /><img align="absmiddle" alt=":snail:" class="gemoji" height="20px" src="https://github.githubassets.com/images/icons/emoji/unicode/1f40c.png" title=":snail:" width="20px" />. Hidden bugs are waiting to be found, and many functions/modules need to be added.
+This version of WAND-PIC is the first version I finished recently (around July-2019) and it’s already been used in several research. During the development of WAND-PIC, I am trying to keep as less dependency as possible and the pnetcdf is the only lib I use. Some part of the code are still under developing, for example, the Multigrid class, it needs further testing and improving.
 Suggestions and feedback are welcome.</p>
 <h2 id="task-lists">Task Lists<a class="headerlink" href="#task-lists" title="Permanent link"></a></h2>
 <ul class="task-list">
 <li class="task-list-item"><input type="checkbox" disabled checked/> Periodic Boundary Condition (finished, need test and upload)..</li>
+<li class="task-list-item"><input type="checkbox" disabled checked/> A Reduced, Simplified Radiation Module (Classical)..</li>
+<li class="task-list-item"><input type="checkbox" disabled/> Pipeline in Longitudinal Direction and Load Balance..</li>
 <li class="task-list-item"><input type="checkbox" disabled/> More and Better MG Solver Smoother..</li>
 <li class="task-list-item"><input type="checkbox" disabled/> High-order Pondermotive Potential..</li>
 <li class="task-list-item"><input type="checkbox" disabled/> OpenMP..</li>
-<li class="task-list-item"><input type="checkbox" disabled/> Load Balance..</li>
 </ul>
 <h2 id="author">Author<a class="headerlink" href="#author" title="Permanent link"></a></h2>
 <ul>
 <li><strong>Tianhong Wang (Cornell University)</strong>(<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#119;&#52;&#55;&#52;&#64;&#99;&#111;&#114;&#110;&#101;&#108;&#108;&#46;&#101;&#100;&#117;">&#116;&#119;&#52;&#55;&#52;&#64;&#99;&#111;&#114;&#110;&#101;&#108;&#108;&#46;&#101;&#100;&#117;</a>) </li>
 </ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link"></a></h2>
-<p>This project is licensed under the MIT License - see the <a href="/Users/Patdan/Google%20Drive/Documents/MyWork/New_Wake_3D_Parallel_Project/WANDPIC_CODE/WANDPIC_Oct11_Particles_Multi_Freq_Ionization_Ramp_Restart/LICENSE.md">LICENSE.md</a> file for details</p>
+<p>This project is licensed under the MIT License - see the <a href="/Users/tianhongwang/Google%20Drive/Documents/MyWork/New_Wake_3D_Parallel_Project/WANDPIC_CODE/WANDPIC_Oct11_Particles_Multi_Freq_Ionization_Ramp_Restart_git/LICENSE.md">LICENSE.md</a> file for details.</p>
 <h2 id="acknowledgments">Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permanent link"></a></h2>
 <ul>
 <li>The author of <strong>WAND-PIC</strong> would like to thank all members in Dr. Gennady Shvets&rsquo; Plasma Group at Cornell University. </li>
-<li>Thank Dr. Vladimir N. Khudik for deriving related equations.</li>
+<li>Thank Dr. Vladimir N. Khudik for his help in deriving related equations.</li>
 <li>Thank Dr. Roopendra Singh Rajawat for inventing the name &ldquo;WAND-PIC&rdquo;.</li>
 </ul>
 <h4 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link"></a></h4>
