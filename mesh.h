@@ -156,7 +156,7 @@ public:
 
 
 
-   void     Put_Chi(int k); 
+   void     Put_Chi(double k0, int k); 
    void Partial_Psi(int k); 
    void Pondermotive(int k);
    void       Put_Jz(int k); 
@@ -167,11 +167,11 @@ public:
    double DopeBegin(void) {return Dop_TB;};
    double DopeEnd(void)   {return Dop_TE;};
 
-   double  Dive_J(int i, int j, int k); // divergence of transverse current
-   double  Curl_J(int i, int j, int k); // Curl of transverse current
+   double  Dive_J(int i, int j, double k0, int k); // divergence of transverse current
+   double  Curl_J(int i, int j, double k0, int k); // Curl of transverse current
    
-   double SourceX(int i, int j, int k);
-   double SourceY(int i, int j, int k);
+   double SourceX(int i, int j, double k0, int k);
+   double SourceY(int i, int j, double k0, int k);
 
    int Get_TpCellx()
    {

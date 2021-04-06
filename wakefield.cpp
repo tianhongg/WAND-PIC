@@ -168,16 +168,26 @@ void Mesh::AdjustSource(int k)
 //===============================
 //======== djx/dx+djy/dy ========
 //===============================
-double Mesh::Dive_J(int i, int j, int k)
+double Mesh::Dive_J(int i, int j, double k0, int k)
 {
 
+	int km=k-1;
+	if(k==0) km=k;
+	double kzz=k-k0;
 
 	Cell &cxm = GetCell(i-1,j,k);
 	Cell &cxp = GetCell(i+1,j,k);
 	Cell &cym = GetCell(i,j-1,k);
 	Cell &cyp = GetCell(i,j+1,k);
-	return (cxp.W_Jx-cxm.W_Jx + cxp.B_Jx-cxm.B_Jx)*0.5/dx
-		  +(cyp.W_Jy-cym.W_Jy + cyp.B_Jy-cym.B_Jy)*0.5/dy;
+
+	Cell &cxmm = GetCell(i-1,j,km);
+	Cell &cxpm = GetCell(i+1,j,km);
+	Cell &cymm = GetCell(i,j-1,km);
+	Cell &cypm = GetCell(i,j+1,km);
+
+
+	return (cxp.W_Jx-cxm.W_Jx + (cxp.B_Jx-cxm.B_Jx)*(1-kzz)+(cxpm.B_Jx-cxmm.B_Jx)*kzz )*0.5/dx
+		  +(cyp.W_Jy-cym.W_Jy + (cyp.B_Jy-cym.B_Jy)*(1-kzz)+(cypm.B_Jy-cymm.B_Jy)*kzz )*0.5/dy;
 	
 }
 
@@ -186,16 +196,25 @@ double Mesh::Dive_J(int i, int j, int k)
 //===============================
 //======== djy/dx-djx/dy ========
 //===============================
-double Mesh::Curl_J(int i, int j, int k)
+double Mesh::Curl_J(int i, int j, double k0, int k)
 {
+
+	int km=k-1;
+	if(k==0) km=k;
+	double kzz=k-k0;
 
 	Cell &cxm = GetCell(i-1,j,k);
 	Cell &cxp = GetCell(i+1,j,k);
 	Cell &cym = GetCell(i,j-1,k);
 	Cell &cyp = GetCell(i,j+1,k);
 
-	return (cxp.W_Jy-cxm.W_Jy + cxp.B_Jy-cxm.B_Jy)*0.5/dx
-		  -(cyp.W_Jx-cym.W_Jx + cyp.B_Jx-cym.B_Jx)*0.5/dy;
+	Cell &cxmm = GetCell(i-1,j,km);
+	Cell &cxpm = GetCell(i+1,j,km);
+	Cell &cymm = GetCell(i,j-1,km);
+	Cell &cypm = GetCell(i,j+1,km);
+
+	return (cxp.W_Jy-cxm.W_Jy + (cxp.B_Jy-cxm.B_Jy)*(1-kzz)+(cxpm.B_Jy-cxmm.B_Jy)*(kzz) )*0.5/dx
+		  -(cyp.W_Jx-cym.W_Jx + (cyp.B_Jx-cym.B_Jx)*(1-kzz)+(cypm.B_Jx-cymm.B_Jx)*(kzz) )*0.5/dy;
 }
 
 
@@ -227,14 +246,22 @@ void Mesh::Put_Jz(int k)
 //=============================================
 //======== Source For Magnetic Field: Sx ======
 //=============================================
-double Mesh::SourceX(int i, int j, int k)
+double Mesh::SourceX(int i, int j, double k0, int k)
 {
+	int km=k-1;
+	if(k==0) km=k;
+	double kzz=k-k0;
+
 	double gamma, ax, sx, Asq;
 	Cell &ccc = GetCell(i,  j,k);
 	Cell &cxm = GetCell(i-1,j,k);
 	Cell &cxp = GetCell(i+1,j,k);
 	Cell &cym = GetCell(i,j-1,k);
 	Cell &cyp = GetCell(i,j+1,k);
+
+	Cell &cxmm = GetCell(i-1,j,km);
+	Cell &cxpm = GetCell(i+1,j,km);
+
 
 
 	Asq  = ccc.W_Asq;
@@ -244,13 +271,18 @@ double Mesh::SourceX(int i, int j, int k)
 		-(ccc.W_Jxx*ccc.W_Ex+ccc.W_Jxy*ccc.W_Ey))/(1+ccc.W_Psi);
 
 	sx = -ccc.W_Jy*ccc.W_Bz/(1+ccc.W_Psi) + ax - (cxp.W_Jxx-cxm.W_Jxx)*0.5/dx
-		 -(cyp.W_Jxy-cym.W_Jxy)*0.5/dy + (cxp.W_Jz-cxm.W_Jz + cxp.B_Jz-cxm.B_Jz )*0.5/dx;
+		 -(cyp.W_Jxy-cym.W_Jxy)*0.5/dy + (cxp.W_Jz-cxm.W_Jz + (cxp.B_Jz-cxm.B_Jz)*(1-kzz)+(cxpm.B_Jz-cxmm.B_Jz)*kzz )*0.5/dx;
 
-	if(k>0 && k< GridZ-1)
+	if(k>1 && k< GridZ-1)
 	{
-		Cell &czp = GetCell(i,  j,k-1);
-		Cell &czm = GetCell(i,  j,k+1);
-		sx +=  (czp.B_Jx-czm.B_Jx)*0.5/dz;
+		 
+		Cell &czp  = GetCell(i, j,k+1);
+		Cell &czm  = GetCell(i, j,k-1);
+		Cell &cz   = GetCell(i, j,km+1);
+		Cell &czmm = GetCell(i, j,km-1);
+
+
+		sx += ( (czp.B_Jx-czm.B_Jx)*(1-kzz)+(cz.B_Jx-czmm.B_Jx)*kzz )*0.5/dz;
 	}
 	return sx;
 }
@@ -261,8 +293,12 @@ double Mesh::SourceX(int i, int j, int k)
 //=============================================
 //======== Source For Magnetic Field: Sy ======
 //=============================================
-double Mesh::SourceY(int i, int j, int k)
+double Mesh::SourceY(int i, int j, double k0, int k)
 {
+
+	int km=k-1;
+	if(k==0) km=k;
+	double kzz=k-k0;
 
 	double gamma, ay, sy, Asq;
 
@@ -272,6 +308,9 @@ double Mesh::SourceY(int i, int j, int k)
 	Cell &cym = GetCell(i,j-1,k);
 	Cell &cyp = GetCell(i,j+1,k);
 
+	Cell &cymm = GetCell(i,j-1,km);
+	Cell &cypm = GetCell(i,j+1,km);
+
 
 	Asq  = ccc.W_Asq;
 	gamma = 0.5*(1+ccc.W_Psi)*(ccc.W_Jxx + ccc.W_Jyy + ccc.W_Denn)+0.5*ccc.W_Denn*(1.0+0.5*Asq)/(1+ccc.W_Psi);
@@ -280,13 +319,15 @@ double Mesh::SourceY(int i, int j, int k)
 		-(ccc.W_Jyy*ccc.W_Ey+ccc.W_Jxy*ccc.W_Ex))/(1+ccc.W_Psi);
 
 	sy = ccc.W_Jx*ccc.W_Bz/(1+ccc.W_Psi) + ay - (cyp.W_Jyy-cym.W_Jyy)*0.5/dy
-		 -(cxp.W_Jxy-cxm.W_Jxy)*0.5/dx + ( cyp.W_Jz-cym.W_Jz + cyp.B_Jz-cym.B_Jz )*0.5/dy;
+		 -(cxp.W_Jxy-cxm.W_Jxy)*0.5/dx + ( cyp.W_Jz-cym.W_Jz + (cyp.B_Jz-cym.B_Jz)*(1-kzz)+(cypm.B_Jz-cymm.B_Jz)*kzz )*0.5/dy;
 
-	if(k>0 && k< GridZ-1)
+	if(k>1 && k< GridZ-1)
 	{
-		Cell &czp = GetCell(i,  j,k-1);
-		Cell &czm = GetCell(i,  j,k+1);
-		sy +=  (czp.B_Jy-czm.B_Jy)*0.5/dz;
+		Cell &czp = GetCell(i,  j,k+1);
+		Cell &czm = GetCell(i,  j,k-1);
+		Cell &cz  = GetCell(i,  j,km+1);
+		Cell &czmm = GetCell(i, j,km-1);
+		sy +=  ( (czp.B_Jy-czm.B_Jy)*(1-kzz)+(cz.B_Jy-czmm.B_Jy)*kzz )*0.5/dz;
 	}
 	return sy;
 }
@@ -297,8 +338,11 @@ double Mesh::SourceY(int i, int j, int k)
 //======================================
 //======== Put Chi: n*/(1+Psi) =========
 //======================================
-void Mesh::Put_Chi(int k)
+void Mesh::Put_Chi(double k0, int k)
 {
+	int km=k-1;
+	if(k==0) km=k;
+	double kzz=k-k0;
 
 	int i,j;
 
@@ -307,7 +351,8 @@ void Mesh::Put_Chi(int k)
 		for (i=1; i<=GridX; i++)
 		{
 			Cell &cc = GetCell(i,j,k);
-			cc.W_Chi = cc.W_Denn/(1.0+cc.W_Psi) + cc.B_Chi;
+			Cell &cm = GetCell(i,j,km);
+			cc.W_Chi = cc.W_Denn/(1.0+cc.W_Psi) + cc.B_Chi*(1-kzz)+cm.B_Chi*(kzz);
 
 		}
 

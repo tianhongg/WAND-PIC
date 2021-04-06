@@ -199,8 +199,8 @@ public:
 	void  BottomSendBack(int what);
 	void   AddCorrection(int layer, int where);
 	void  MG_BottomLayer(int field);
-	int	  MG_V_cycle(int field, int k);
-	void	  Put_Source(int field, int k);
+	int	  MG_V_cycle(int field, double k0, int k);
+	void	  Put_Source(int field, double k0, int k);
 	void	  Put_Fields(int field, int k);
 	double	   FindError(double &maxall);
 

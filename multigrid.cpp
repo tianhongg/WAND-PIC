@@ -1495,7 +1495,7 @@ double MultiGrid::FindError(double &maxall)
 	return eps;
 }
 
-void MultiGrid::Put_Source(int field, int k)
+void MultiGrid::Put_Source(int field, double k0, int k)
 {
 
 	int i,j;
@@ -1541,22 +1541,22 @@ void MultiGrid::Put_Source(int field, int k)
 				break;
 				//===Ez==================================
 				case 1:
-				mgc.M_value[1] = -p_Meshs->Dive_J(i, j, k)*dxdy;
+				mgc.M_value[1] = -p_Meshs->Dive_J(i, j, k0, k)*dxdy;
 				mgc.M_value[4] = 0.0;
 				break;
 				//===Bz==================================
 				case 2:
-				mgc.M_value[1] =  p_Meshs->Curl_J(i, j, k)*dxdy;
+				mgc.M_value[1] =  p_Meshs->Curl_J(i, j, k0, k)*dxdy;
 				mgc.M_value[4] = 0.0;
 				break;
 				//===Bx==================================
 				case 3:
-				mgc.M_value[1] =  p_Meshs->SourceY(i, j, k)*dxdy;
+				mgc.M_value[1] =  p_Meshs->SourceY(i, j, k0, k)*dxdy;
 				mgc.M_value[4] =  c.W_Chi*dxdy;
 				break;
 				//===By==================================
 				case 4:
-				mgc.M_value[1] = -p_Meshs->SourceX(i, j, k)*dxdy;
+				mgc.M_value[1] = -p_Meshs->SourceX(i, j, k0, k)*dxdy;
 				mgc.M_value[4] =  c.W_Chi*dxdy;
 				break;
 
@@ -1596,7 +1596,7 @@ void MultiGrid::Put_Fields(int field, int k)
 
 
 
-int MultiGrid::MG_V_cycle(int field, int k)
+int MultiGrid::MG_V_cycle(int field, double k0, int k)
 {
 
 
@@ -1607,7 +1607,7 @@ int MultiGrid::MG_V_cycle(int field, int k)
 //============================================================
 //==============   Put Source For Different Equation =========
 //============================================================
-	Put_Source(field, k);
+	Put_Source(field, k0, k);
 
 
 //============================================================

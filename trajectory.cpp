@@ -19,11 +19,11 @@
 //----------------------------------------------------------------------------------||
 #include "wand_PIC.h"
 
-//=======Cell Class
+
 Trajectory::Trajectory(double xt, double yt, double ztime, int TpCellx, int TpCelly)
-	{
-	p_PrevTraj = p_NextTraj = NULL;
-	x = old_x = x0 = xt;
+  {
+  p_PrevTraj = p_NextTraj = NULL;
+  x = old_x = x0 = xt;
   y = old_y = y0 = yt;
   z0 = ztime;
 
@@ -38,7 +38,7 @@ Trajectory::Trajectory(double xt, double yt, double ztime, int TpCellx, int TpCe
   mass = 1.0/double(TpCellx*TpCelly);
   p_domain()->p_Mesh()->AddTrajectory(this);
 
-	}; 
+  }; 
 
 
 

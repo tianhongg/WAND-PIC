@@ -55,6 +55,7 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
    AddEntry((char*)"Boundary",     &BC,       0);
    AddEntry((char*)"BufferSize",   &Buffersize,  2.0);
    AddEntry((char*)"Restart",      &IfRestart,0);
+   AddEntry((char*)"DriverQ",      &Q1,0);
 
    Rank = rank;
 
@@ -294,6 +295,7 @@ while(Time<Tmax)
 {
 
    if(Nbeam) p_Meshes -> BeamSource();
+   
    
    //===================================
    //======== Push Wakefield in z=======

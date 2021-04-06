@@ -101,7 +101,7 @@ class Domain : public NList{
     int *ifAy;
     double *OmegaL;
     int NFreqs;
-    
+    double Q1;
     double Get_dx() {return dx;};
     double Get_dy() {return dy;};
     double Get_dz() {return dz;};
@@ -125,10 +125,10 @@ class Domain : public NList{
     int RK1(double &k0, int &k);
     int RK2(double &k0, int &k);
     int Boris(double &k0, int &k);
-    int PushWakeFields( int k);
-    int PushWakeFieldsE( int k);
-    int PushWakeFieldsEz( int k);
-    int PushWakeFieldsB( int k);
+    int PushWakeFields(double k0, int k);
+    int PushWakeFieldsE(double k0, int k);
+    int PushWakeFieldsEz(double k0, int k);
+    int PushWakeFieldsB(double k0, int k);
     int PushPulses(int k, int NF);
     void Run();
 

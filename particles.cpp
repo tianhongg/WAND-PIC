@@ -216,6 +216,22 @@ double Specie::Density(double x0, double y0, double z0)
         break;
 
 
+         // Half Gaussian ellipsoid
+        case 7:
+        	arg += (x0-P_Centerx)*(x0-P_Centerx)/P_Sizex/P_Sizex;
+        	arg += (y0-P_Centery)*(y0-P_Centery)/P_Sizey/P_Sizey;
+        	arg += (z0-P_Centerz)*(z0-P_Centerz)/P_Sizez/P_Sizez;
+        	if(z0-P_Centerz<0) return 0;
+        	if(arg<16)
+        	{
+            	return exp(-arg);
+        	}
+
+        	return 0;
+		break;
+
+
+
 	}
 
 	return 0.0;
