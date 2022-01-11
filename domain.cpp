@@ -29,6 +29,7 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
 {
 
    Time = 0.0;
+   // Tstep = 0;
 
    ifAx = ifAy = 0;
 
@@ -37,6 +38,12 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
    AddEntry((char*)"XStep",		&dx,	1.0);
    AddEntry((char*)"YStep",		&dy,	1.0);
    AddEntry((char*)"ZStep",		&dz,	1.0);
+   
+   AddEntry((char*)"MeshType",    &MeshType,  0);
+   AddEntry((char*)"dxRefine",    &dxRefine,  2);
+   AddEntry((char*)"order",       &order,  4);
+   AddEntry((char*)"radius",      &radius0,  0.0);
+   AddEntry((char*)"delta",       &delta,  1);
 
    AddEntry((char*)"TStep",		&dt,	1.0);
    AddEntry((char*)"AdaptiveDt", &Adap_dt,  0);
@@ -79,28 +86,34 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
    //=======================Creating Mesh     ======================
    //===============================================================
    // set number of grids
-   XGridN = round(Xmax/(p_MPP->GetXpart()*1.0)/dx);
-   YGridN = round(Ymax/(p_MPP->GetYpart()*1.0)/dy);
-   ZGridN = round(Zmax/dz);
 
+
+   if( Xmax != Ymax || dx != dy || ( p_MPP->GetXpart() ) != ( p_MPP->GetYpart() ) )
+   {
+      if (rank==0)  std::cout << "==== At this Stage: Please Make X, Y Direction Identical====\n";
+      exit(0);
+   }
+
+
+   WDOUBLE lim=0;
+   int totalGrid=0;
+
+   while(lim<=Xmax*0.5)
+   {
+      lim +=CustomGrid(lim);
+      totalGrid++;
+   }
+
+   XGridN = round(totalGrid*2.0/(p_MPP->GetXpart()));
+   YGridN = round(totalGrid*2.0/(p_MPP->GetYpart()));
+   ZGridN = round(Zmax/dz);
 
    //Round XY-Mesh to even number
    XGridN = ceil(XGridN/2.0)*2; 
    YGridN = ceil(YGridN/2.0)*2; 
 
 
-   if( XGridN != YGridN || ( p_MPP->GetXpart() ) != ( p_MPP->GetYpart() ) )
-   {
-   if (rank==0)  std::cout << "==== Please Make X, Y Direction Identical====\n";
-   exit(0);
-   }
-
-
-   //Resize the domain;
-   Xmax=XGridN*dx*p_MPP->GetXpart();
-   Ymax=YGridN*dy*p_MPP->GetYpart();
    Zmax=ZGridN*dz;
-
 
    //===============================================================
    //=======================Initiate Laser Pulse in the Domain======
@@ -113,7 +126,7 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
       pp_Pulses = new Pulse*[Npulse];  
       //====================================
       //How Many frequencies possible in the domain.
-      OmegaL = new double[Npulse];
+      OmegaL = new WDOUBLE[Npulse];
       ifAx = new int[Npulse];
       ifAy = new int[Npulse];
       NFreqs = 0;
@@ -141,13 +154,12 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
 
    }
 
-   
-
    if (rank==0)  std::cout << "==== Domain: Creating Mesh.              ====\n";
+   
    p_Meshes = new Mesh(XGridN,YGridN,ZGridN,p_File);
+   
    if (rank==0)  std::cout << "==== Domain: Mesh Created.               ====\n";
  
-
 
    if (Npulse > 0) 
    {
@@ -170,18 +182,15 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
          if (rank==0)        printf("==== Domain: Pusle File No.%4d Loaded.  ====\n",IfRestart);
          // reset the timer.
          Time=OutDt*IfRestart;
-
       }
-
    }
-
-
 
 
    //===============================================================
    //=======================Initiate Beam in the Domain  ===========
    //===============================================================
    NSpecie = 0;
+
    if(Nbeam>0)
    {
       SpecieType = new int[Nbeam];
@@ -193,7 +202,6 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
          pp_Species[i] = new Specie(name, p_File);
          AddSpecie(pp_Species[i]->P_type);
       }
-
       
       if (rank==0)  std::cout << "==== Domain: Beam Parameters Are Read.   ====\n";
 
@@ -231,26 +239,34 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
    {
       LoadParti(IfRestart);
       if (rank==0)  printf("==== Domain: ParticleFile No.%4d Loaded.====\n",IfRestart);
-      Time=OutDt*IfRestart;
+      // Time=OutDt*IfRestart;
    }
 
    //===============================================================
    //=======================Seed Trajectory in the Domain===========
    //===============================================================
    if (rank==0)  std::cout << "==== Domain: Seed Trajectories in Mesh.  ====\n";
+   
    p_Meshes->SeedTrajectory();
+   
    if (rank==0)  std::cout << "==== Domain: Trajectories Are Seeded.    ====\n";
 
    trajorder=p_Meshes->GetPushOrder();
 
    if(trajorder==0 || trajorder==1 || trajorder==2)
-   {   
+   { 
+
    }
    else
    {
-   if (rank==0)  std::cout << "==== Domain: Wrong Traj Pushing Order.   ====\n";
-   exit(12);
+      if (rank==0)  std::cout << "==== Domain: Wrong Traj Pushing Order.   ====\n";
+      exit(12);
    }
+
+
+
+
+
 
    //===============================================================
    //=======================  Create Communication.      ===========
@@ -267,6 +283,8 @@ Domain::Domain (char * infile, int rank) : NList("Domain")
    if (rank==0)  std::cout << "=============================================\n\n\n\n";
 
 
+
+
 }
 
 
@@ -277,13 +295,13 @@ void Domain::Run()
    //=======Timer=======
    std::clock_t start;
    start = std::clock();
-   double duration;
+   WDOUBLE duration;
    //====================
 
    int n=0;
    int nc=0;
    int k=0;
-   double k0=0;
+   WDOUBLE k0=0;
    int ierr;
    
    // restart;
@@ -293,6 +311,7 @@ void Domain::Run()
 //============= Main Routine ===========
 while(Time<Tmax)
 {
+   // Tstep=n;
 
    if(Nbeam) p_Meshes -> BeamSource();
    
@@ -317,15 +336,11 @@ while(Time<Tmax)
    if(ierr == 0)  p_Meshes -> SetFieldZeroAfter(k);
    //===================================
 
-
    //===================================
    //======get laser field =============
    if(NFreqs && Nbeam) p_Meshes -> LaserFields();
    //===================================
 
-
-
-   
    //===================================
    //=== here do ionization block ======
    if(p_Meshes->Ifioniz() && Time>p_Meshes->DopeBegin() 
@@ -341,20 +356,17 @@ while(Time<Tmax)
    //===================================
 
    //==================save==============
-   duration=(std::clock()-start)/(double)CLOCKS_PER_SEC/60;
+   duration=(std::clock()-start)/(WDOUBLE)CLOCKS_PER_SEC/60;
    if(Rank==0) printf("==== Step: %8d ----  %7.3f Mins.  ====\n",n,duration);
    if(Nbeam&&Adap_dt&&Rank==0) printf("==== Current dt: %12.3f kp^-1.     ====\n",dt);
    Time += dt;
    n++;
    //===========================
 
-
    //=====adpative time step====
    if(Nbeam&&Adap_dt) p_Meshes -> SetNewTimeStep();
 
    //===========================
-
-
 
 
    //===========================
@@ -376,7 +388,7 @@ while(Time<Tmax)
       }
 
       nc++;
-      duration=(std::clock()-start)/(double)CLOCKS_PER_SEC/60;
+      duration=(std::clock()-start)/(WDOUBLE)CLOCKS_PER_SEC/60;
 
       if(Rank==0)
       { 
@@ -452,6 +464,48 @@ int Domain::Get_NSpecie(int SpecieType)
    return num;
 
 }
+
+
+WDOUBLE Domain::CustomGrid(WDOUBLE r)
+{
+
+   switch(MeshType)
+   {
+      case 0:
+         return dx;
+      break;
+
+      case 1:
+         if(order<0) order=0;
+         if(dxRefine<1) dxRefine=1;
+         if(delta<=0) delta=1;
+         return dx/( (dxRefine-1.0)/(pow(abs(r-radius0)/delta,order)+1.0)+1.0);
+      break;
+
+      case 2:
+         if(order<0) order=0;
+         if(dxRefine<1) dxRefine=1;
+         if(delta<=0) delta=1;
+         return dx/( (dxRefine-1.0)*exp(-pow(abs(r-radius0)/delta,order))+1.0);
+      break;
+
+      case 3:
+         if(order<0) order=0;
+         if(dxRefine<1) dxRefine=1;
+         if(delta<=0) delta=1;
+         if(r>Xmax/2) return dx;
+
+         return (dx-dx/dxRefine)*r/(Xmax/2)+dx/dxRefine;
+
+      break;
+
+
+   }
+
+   return 0;
+
+}
+
 
 //---------------------------- Domain::~Domain() -----------------------
 Domain::~Domain()

@@ -29,7 +29,8 @@
 #ifndef H_MULTI
 #define H_MULTI
 
-
+#include<vector>
+#include<utility> 
 
 
 class MG_Cell
@@ -43,13 +44,13 @@ private:
 	// value at this cell
 	union
 	{	
-		double M_value[1];
-		double field;
+		WDOUBLE M_value[1];
+		WDOUBLE field;
 	};
-		double source;   //1
-		double Residu;   //2
-		double savefield; //3
-		double Chi;  //4
+		WDOUBLE source;   //1
+		WDOUBLE Residu;   //2
+		WDOUBLE savefield; //3
+		WDOUBLE Chi;  //4
 
 
 	union
@@ -61,7 +62,6 @@ private:
 		dcomplex C_Residu;   //2
 		dcomplex C_savefield; //3
 		dcomplex C_Chi;  //4
-
 
 
 	//point to the four cells we need to restrict from
@@ -85,6 +85,9 @@ private:
 	int Protype;  // four types of prolongation from 0 to 3;
 	int Grandidx_X;
 	int Grandidx_Y;
+
+	WDOUBLE dx;
+	WDOUBLE dy;
 
 public:
 
@@ -128,10 +131,10 @@ private:
 	int RelaxType;
 	int BottomType;
 
-	double dxdy;
+	WDOUBLE dxdy;
 	int GridXY;
-	double EpsLim;
-	double omega;
+	WDOUBLE EpsLim;
+	WDOUBLE omega;
 
 
 	int BottomCells;  //total cells at the bottom layer without the bound cells.
@@ -187,7 +190,7 @@ public:
 	};
 
 
-	//======== Double Type ==========================================
+	//======== WDOUBLE Type ==========================================
 	void		Exchange(int what, int layer);
 	void 	 Restriction(int send, int rece, int tolayer, int where);
 	void 	RestrictionB(int send, int rece, int tolayer, int where);
@@ -199,10 +202,10 @@ public:
 	void  BottomSendBack(int what);
 	void   AddCorrection(int layer, int where);
 	void  MG_BottomLayer(int field);
-	int	  MG_V_cycle(int field, double k0, int k);
-	void	  Put_Source(int field, double k0, int k);
+	int	  MG_V_cycle(int field, WDOUBLE k0, int k);
+	void	  Put_Source(int field, WDOUBLE k0, int k);
 	void	  Put_Fields(int field, int k);
-	double	   FindError(double &maxall);
+	WDOUBLE	   FindError(WDOUBLE &maxall);
 
 	//======== Complex Type ==========================================
 	void 	 RestrictionC(int send, int rece, int tolayer, int where);
@@ -216,7 +219,7 @@ public:
 	void		 SetZeroC(int what, int layer, int where);
 	void		ExchangeC(int what, int layer);
 	void   AddCorrectionC(int layer, int where);
-	double	   FindErrorC(double &maxall);
+	WDOUBLE	   FindErrorC(WDOUBLE &maxall);
 	void	  Put_SourceC(int field, int k, int NF);
 	void	  Put_FieldsC(int field, int k, int NF);
 	int	  MG_V_cycleC(int field, int k, int NF);

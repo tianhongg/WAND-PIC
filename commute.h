@@ -24,7 +24,7 @@
 #ifndef H_COMM
 #define H_COMM
 
-
+#include<vector>
 
 //---------------------------- Mesh class -----------------------
 class Commute
@@ -38,18 +38,30 @@ private:
 
    int bufsize;
 
-   double *SendSourceXm;  //Array to send for the sources;
-   double *SendSourceYm;  //Array to send for the sources;
-   double *SendSourceXp;  //Array to send for the sources;
-   double *SendSourceYp;  //Array to send for the sources;
+   WDOUBLE *SendSourceXm;  //Array to send for the sources;
+   WDOUBLE *SendSourceYm;  //Array to send for the sources;
+   WDOUBLE *SendSourceXp;  //Array to send for the sources;
+   WDOUBLE *SendSourceYp;  //Array to send for the sources;
 
-   double *ReceSourceXm;  //Array for Rece 
-   double *ReceSourceYm;  //Array for Rece 
-   double *ReceSourceXp;  //Array for Rece 
-   double *ReceSourceYp;  //Array for Rece 
+   WDOUBLE *ReceSourceXm;  //Array for Rece 
+   WDOUBLE *ReceSourceYm;  //Array for Rece 
+   WDOUBLE *ReceSourceXp;  //Array for Rece 
+   WDOUBLE *ReceSourceYp;  //Array for Rece 
 
-   //double *SendFields;  //Array to send for the fields;
 
+
+   // diagonal
+   WDOUBLE *SendSourcemm;  //Array to send for the sources;
+   WDOUBLE *SendSourcemp;  //Array to send for the sources;
+   WDOUBLE *SendSourcepm;  //Array to send for the sources;
+   WDOUBLE *SendSourcepp;  //Array to send for the sources;
+
+   WDOUBLE *ReceSourcemm;  //Array for Rece 
+   WDOUBLE *ReceSourcemp;  //Array for Rece 
+   WDOUBLE *ReceSourcepm;  //Array for Rece 
+   WDOUBLE *ReceSourcepp;  //Array for Rece 
+
+   //WDOUBLE *SendFields;  //Array to send for the fields;
 
    int SendSouSizeX;
    int SendSouSizeY;
@@ -68,25 +80,28 @@ private:
    int YmPE;
    int YpPE; 
 
+   int mmPE; 
+   int mpPE;
+   int pmPE;
+   int ppPE; 
+
    int GridX;
    int GridY;
 
    int kold;
 
-
-
-
+   std::vector<WDOUBLE> CellAccX; 
+   std::vector<WDOUBLE> CellAccY; 
 
 public:
 
-
    
-   void DoCommuteT(int what, int &Sendxm, int &Sendxp, int &Sendym, int &Sendyp);
-   void    UnPackT(int what, int  Recexm, int  Recexp, int  Receym, int  Receyp);
+   void DoCommuteT(exchange what, std::vector<int> SendN);
+   void    UnPackT(exchange what, std::vector<int> ReceN);
 
-   void DoCommute(int what, int k);
-   void    DoPack(int what, int k);
-   void    UnPack(int what, int k);
+   void DoCommute(exchange what, int k);
+   void    DoPack(exchange what, int k);
+   void    UnPack(exchange what, int k);
 
    int Get_bufsize() {return bufsize;};
 

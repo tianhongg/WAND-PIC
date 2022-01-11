@@ -30,25 +30,32 @@ class Trajectory{
 
 private:
 
-  double x;
-  double y;
+  WDOUBLE x;
+  WDOUBLE y;
 
-  double x0;
-  double y0;
-  double z0;
+  WDOUBLE x0;
+  WDOUBLE y0;
+  WDOUBLE z0;
 
-  double mass;
-  double Gamma;
-  double Weight;
+  WDOUBLE mass;
+  WDOUBLE Gamma;
+  WDOUBLE Weight;
+
+  // cell index 
+  int idx_i;
+  int idx_j;
+  //shape
+  WDOUBLE sx; // shape sx;
+  WDOUBLE sy; // shape sy;
 
    union
    {
-      double T_Source[1];
-      double unitm;
+      WDOUBLE T_Source[1];
+      WDOUBLE unitm;
    };
-   double Vx, Vy, Vxx, Vyy, Vxy;
+   WDOUBLE Vx, Vy, Vxx, Vyy, Vxy;
 
-   double old_x,old_y, old_vx, old_vy;
+   WDOUBLE old_x,old_y, old_vx, old_vy;
    
 //=================================
 //=======  Need to Send    ========
@@ -61,8 +68,8 @@ private:
   Trajectory *p_NextTraj;
 
 public:
-  
-  Trajectory(double xt, double yt, double ztime, int TpCellx, int TpCelly);
+
+  Trajectory(WDOUBLE xt, WDOUBLE yt, WDOUBLE ztime, int TpCellx, int TpCelly, WDOUBLE sxx, WDOUBLE syy);
   ~Trajectory();
 
 };

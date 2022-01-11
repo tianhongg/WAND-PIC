@@ -46,6 +46,11 @@ private:
   int idx_YmPE;     // idx of processor below.
   int idx_YpPE;     // idx of processor above.
 
+  int idx_mmPE;     // idx of processor left-blew
+  int idx_pmPE;     // idx of processor right-blew
+  int idx_mpPE;     // idx of processor left-above
+  int idx_ppPE;     // idx of processor right-above
+
 
 
 
@@ -58,6 +63,11 @@ private:
   int GetXpPE()  {return idx_XpPE;};
   int GetYmPE()  {return idx_YmPE;};
   int GetYpPE()  {return idx_YpPE;};
+
+  int GetmmPE()  {return idx_mmPE;};
+  int GetmpPE()  {return idx_mpPE;};
+  int GetpmPE()  {return idx_pmPE;};
+  int GetppPE()  {return idx_ppPE;};
 
   int RankIdx_X() {return idx_X;};
   int RankIdx_Y() {return idx_Y;};

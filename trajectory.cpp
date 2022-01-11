@@ -20,7 +20,7 @@
 #include "wand_PIC.h"
 
 
-Trajectory::Trajectory(double xt, double yt, double ztime, int TpCellx, int TpCelly)
+Trajectory::Trajectory(WDOUBLE xt, WDOUBLE yt, WDOUBLE ztime, int TpCellx, int TpCelly, WDOUBLE sxx, WDOUBLE syy)
   {
   p_PrevTraj = p_NextTraj = NULL;
   x = old_x = x0 = xt;
@@ -29,22 +29,27 @@ Trajectory::Trajectory(double xt, double yt, double ztime, int TpCellx, int TpCe
 
   Vx = Vy = Vxx = Vyy = Vxy = 0.0;
   old_vx = old_vy = 0.0;
+  
   unitm = 1.0;
   Gamma = 1.0;
 
   Weight = p_domain()->p_Mesh()->ProfileLongi(x0,y0,z0)
           *p_domain()->p_Mesh()->ProfileTrans(x0,y0,z0);
           
-  mass = 1.0/double(TpCellx*TpCelly);
+  mass = 1.0/(TpCellx*TpCelly);
+
+  sx=sxx;
+  sy=syy;
+
   p_domain()->p_Mesh()->AddTrajectory(this);
 
   }; 
 
 
 
-double Mesh::ProfileLongi(double xt, double yt, double zt)
+WDOUBLE Mesh::ProfileLongi(WDOUBLE xt, WDOUBLE yt, WDOUBLE zt)
 {
-    double tmp;
+    WDOUBLE tmp;
  
 
     switch(PProfileL)
@@ -85,7 +90,7 @@ double Mesh::ProfileLongi(double xt, double yt, double zt)
 }; 
 
 
-double Mesh::ProfileTrans(double xt, double yt, double zt)
+WDOUBLE Mesh::ProfileTrans(WDOUBLE xt, WDOUBLE yt, WDOUBLE zt)
 {
 
 

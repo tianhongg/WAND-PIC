@@ -43,8 +43,14 @@ MPI_Comm_rank(MPI_COMM_WORLD, &Rank);
 	{	
 		std::cout << Banner;
 		std::cout << "\n=============================================\n";
-		std::cout <<"==== Starting Program: Wand-PIC.         ====\n";
+		std::cout <<"==== Starting Program: WAND-PIC.         ====\n";
 		printf("==== %8d Processors Initiated.      ====\n",N_processor);
+
+		#ifdef _WTYPE
+			printf("==== WAND Is Using DOUBLE Data Type.     ====\n");
+		#else
+			printf("==== WAND Is Using FLOAT Data Type.      ====\n");
+		#endif
 	};
 
 	Domain *domain = new Domain((char*)"WAND.ini",Rank);

@@ -28,7 +28,7 @@
 Pulse::Pulse (char *name, FILE *f) : NList (name)
 {
 
-   AddEntry("a0", &a0, 1.0);
+   AddEntry("a0",   &a0, 1.0);
    AddEntry("Xpol", &Xpol, 0.);
    AddEntry("Ypol", &Ypol, 1.);
 
@@ -99,7 +99,7 @@ Pulse::Pulse (char *name, FILE *f) : NList (name)
 void Mesh::InitPulse(Pulse *pulse)
 {
 
-   double Omega =pulse->Omega;
+   WDOUBLE Omega =pulse->Omega;
    int i, NF;
    //====== store frequency of the pulse.
    for(i=0; i<p_domain()->NFreqs; i++)
@@ -114,15 +114,14 @@ void Mesh::InitPulse(Pulse *pulse)
 
    for (int k=0; k<GridZ; k++) 
    {
-      double z = CellZ(k);
+      WDOUBLE z = CellZ(k);
+      
       for (int j=0; j<GridY+2; j++) 
       {
-         double y = CellY(j);
          for (int i=0; i<GridX+2; i++)
          {
-               double x = CellX(i);
                Cell &c = GetCell(i, j, k);
-               pulse->Put_AComplex(x,y,z,c, NF);
+               pulse->Put_AComplex(c.Xcord, c.Ycord, z, c, NF);
          }
       }
    }
@@ -133,23 +132,23 @@ void Mesh::InitPulse(Pulse *pulse)
 
 
 
-void Pulse::Put_AComplex(double x, double y, double z, Cell &c, int NF)
+void Pulse::Put_AComplex(WDOUBLE x, WDOUBLE y, WDOUBLE z, Cell &c, int NF)
 {
 
    x -= Xcenter;
    y -= Ycenter;
    z -= Zcenter;
    
-   double phasex;
-   double phasey;
-   double phase0;
+   WDOUBLE phasex;
+   WDOUBLE phasey;
+   WDOUBLE phase0;
 
 
-   double ZRx = 0.5*XSpotSize*XSpotSize*Omega;
-   double ZRy = 0.5*YSpotSize*YSpotSize*Omega;
+   WDOUBLE ZRx = 0.5*XSpotSize*XSpotSize*Omega;
+   WDOUBLE ZRy = 0.5*YSpotSize*YSpotSize*Omega;
 
 
-   double RCurva =ZFocal-Zcenter;
+   WDOUBLE RCurva =ZFocal-Zcenter;
 
 
    if (RCurva==0)
@@ -178,13 +177,13 @@ void Pulse::Put_AComplex(double x, double y, double z, Cell &c, int NF)
 
 
 
-double Pulse::ProfileLongi(double x, double y, double z)
+WDOUBLE Pulse::ProfileLongi(WDOUBLE x, WDOUBLE y, WDOUBLE z)
 {
 
    if (ZLength<=0) return 0.;
 
-   double arg = 0.;
-   double amp = 0.;
+   WDOUBLE arg = 0.;
+   WDOUBLE amp = 0.;
 
    arg = (z/ZLength)*(z/ZLength);
 
@@ -208,13 +207,13 @@ double Pulse::ProfileLongi(double x, double y, double z)
 }
 
 
-double Pulse::ProfileTrans(double x, double y, double z)
+WDOUBLE Pulse::ProfileTrans(WDOUBLE x, WDOUBLE y, WDOUBLE z)
 {
 
    if (XSpotSize<=0 || YSpotSize<=0) return 0.;
    
-   double arg = 0.;
-   double amp = 0.;
+   WDOUBLE arg = 0.;
+   WDOUBLE amp = 0.;
 
    arg = (x/XSpotSize)*(x/XSpotSize)+(y/YSpotSize)*(y/YSpotSize);
 
@@ -243,7 +242,7 @@ void Mesh::LaserFields()
 {
 
    int i,j,k, NF;
-   double k0;
+   WDOUBLE k0;
    int ifax, ifay;
    int NFreqs=p_domain()->NFreqs;
 

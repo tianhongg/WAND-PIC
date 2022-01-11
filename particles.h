@@ -38,28 +38,34 @@ class Particle{
 
 public:
 
-	double x;
-	double y;
-	double z;
+	WDOUBLE x;
+	WDOUBLE y;
+	WDOUBLE z;
 
-	double x0;
-	double y0;
-	double z0;
+	WDOUBLE x0;
+	WDOUBLE y0;
+	WDOUBLE z0;
 
-	double Ex0;
-	double Ey0;
-	double Ez0;
+	WDOUBLE Ex0;
+	WDOUBLE Ey0;
+	WDOUBLE Ez0;
 
 	int type;
 
+	int idx_i;
+	int idx_j;
+
+	WDOUBLE sx;
+	WDOUBLE sy;
+
 	union
 	{
-		double P_Source[1];
-		double unitm;
+		WDOUBLE P_Source[1];
+		WDOUBLE unitm;
 	};
-	double px, py, pz, gamma, q2m, weight, Q;
+	WDOUBLE px, py, pz, gamma, q2m, weight, Q;
 
-	double Wxw, Wyw, Wzw, Wxl, Wyl, Wzl;
+	WDOUBLE Wxw, Wyw, Wzw, Wxl, Wyl, Wzl;
 
   
 
@@ -71,10 +77,10 @@ public:
 
 public:
 
-	Particle(double x0p,  double y0p,  double z0p,
-			 double pxp,  double pyp,  double pzp,
-  			 double Ex0p, double Ey0p, double Ez0p,
-  			 double q2mp, double weightp);
+	Particle(WDOUBLE x0p,  WDOUBLE y0p,  WDOUBLE z0p,
+			 WDOUBLE pxp,  WDOUBLE pyp,  WDOUBLE pzp,
+  			 WDOUBLE Ex0p, WDOUBLE Ey0p, WDOUBLE Ez0p,
+  			 WDOUBLE q2mp, WDOUBLE weightp);
 
   virtual ~Particle() {;};
 
@@ -84,10 +90,10 @@ public:
 
 class Electron : public Particle {
 	public:
-	Electron(double x0p,  double y0p,  double z0p,
-			 double pxp,  double pyp,  double pzp,
-  			 double Ex0p, double Ey0p, double Ez0p,
-  			 double q2mp, double weightp);
+	Electron(WDOUBLE x0p,  WDOUBLE y0p,  WDOUBLE z0p,
+			 WDOUBLE pxp,  WDOUBLE pyp,  WDOUBLE pzp,
+  			 WDOUBLE Ex0p, WDOUBLE Ey0p, WDOUBLE Ez0p,
+  			 WDOUBLE q2mp, WDOUBLE weightp);
 	~Electron();
 
 };
@@ -96,10 +102,10 @@ class Electron : public Particle {
 
 class Ion : public Particle {
 	public:
-	Ion(double x0p,  double y0p,  double z0p,
-		double pxp,  double pyp,  double pzp,
-  		double Ex0p, double Ey0p, double Ez0p,
-  		double q2mp, double weightp);
+	Ion(WDOUBLE x0p,  WDOUBLE y0p,  WDOUBLE z0p,
+		WDOUBLE pxp,  WDOUBLE pyp,  WDOUBLE pzp,
+  		WDOUBLE Ex0p, WDOUBLE Ey0p, WDOUBLE Ez0p,
+  		WDOUBLE q2mp, WDOUBLE weightp);
 	~Ion();
 
 };
@@ -121,7 +127,7 @@ public:
 	int P_type;
 
 	int P_profile;
-	double density;
+	WDOUBLE density;
 
 	int PpCellx;        
 	int PpCelly;
@@ -129,32 +135,32 @@ public:
 
 	int Seed_type;
 
-	double P_Centerx;
-	double P_Centery;
-	double P_Centerz;
+	WDOUBLE P_Centerx;
+	WDOUBLE P_Centery;
+	WDOUBLE P_Centerz;
 
-	double P_Sizex;
-	double P_Sizey;
-	double P_Sizez;
+	WDOUBLE P_Sizex;
+	WDOUBLE P_Sizey;
+	WDOUBLE P_Sizez;
 
 
 	int P_order;
-	double P_deltaZ;
+	WDOUBLE P_deltaZ;
 
 
-	double P_px0;
-	double P_py0;
-	double P_pz0;
+	WDOUBLE P_px0;
+	WDOUBLE P_py0;
+	WDOUBLE P_pz0;
 
-	double pxspread;
-	double pyspread;
-	double pzspread;
+	WDOUBLE pxspread;
+	WDOUBLE pyspread;
+	WDOUBLE pzspread;
 
-	double p_q2m;
+	WDOUBLE p_q2m;
 
 public:
 
-	double Density(double x0, double y0, double z0);
+	WDOUBLE Density(WDOUBLE x0, WDOUBLE y0, WDOUBLE z0);
 	int Get_NParts();
 
 	Specie(char *name, FILE *f);

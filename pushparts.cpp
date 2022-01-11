@@ -23,35 +23,35 @@
 #include "wand_PIC.h"
 
 
-void Mesh::PushParticle()
+void Mesh::PushParticle()//v
 {
 
 
 	Particle *p = NULL;
 
-	double ddx;
-	double ddy;
-	double ddz;
-	double ddz2;
+	WDOUBLE ddx;
+	WDOUBLE ddy;
+	WDOUBLE ddz;
+	WDOUBLE ddz2;
+	WDOUBLE sx,sy,sxy;
 
-	double dt  = p_domain()->Get_dt();
+	WDOUBLE dt  = p_domain()->Get_dt();
 	int Nt  = p_domain()->Get_SubCycle();
-	double dtt = dt/Nt;
+	WDOUBLE dtt = dt/Nt;
 
-	double Ex, Ey, Ez, Psi, Bx, By, Bz, Pondx, Pondy, Asq;
+	WDOUBLE Ex, Ey, Ez, Psi, Bx, By, Bz, Pondx, Pondy, Asq;
 
 	dcomplex Exl, Eyl, Ezl, Bxl, Byl, Bzl;
 
-	double ExlR, EylR, EzlR, BxlR, BylR, BzlR;
+	WDOUBLE ExlR, EylR, EzlR, BxlR, BylR, BzlR;
 
-	double x, y, z, x0, y0, z0, px, py, pz, px0, py0, pz0, gamma;
+	WDOUBLE x, y, z, x0, y0, z0, px, py, pz, px0, py0, pz0, gamma;
 
-	double pxp, pyp, pzp;
+	WDOUBLE pxp, pyp, pzp;
 
-	double q2m;
-	double wmmm, wmpm, wpmm, wppm;
-	double wmmp, wmpp, wpmp, wppp;
-	double cc0,  cc1,  cc2;
+	WDOUBLE q2m;
+
+	WDOUBLE cc0,  cc1,  cc2;
 
 	int i, j, k, k2, n;
 
@@ -60,35 +60,38 @@ void Mesh::PushParticle()
 	int Xpa  = p_domain()->p_Partition()->GetXpart();
 	int Ypa  = p_domain()->p_Partition()->GetYpart();
 
-	double Xmax = Offset_X+GridX*dx;
-	double Ymax = Offset_Y+GridY*dy;
+	WDOUBLE Xmax = Offset_X+GridX*dx;
+	WDOUBLE Ymax = Offset_Y+GridY*dy;
+
+	Cell  **c = new Cell*[18];
+	WDOUBLE weight[18];
 
 	int NFreqs =  p_domain()->NFreqs;
 	int NF;
-	double OmegaL;
+	WDOUBLE OmegaL;
 
 
 	//===radiation part=========
-	double reinkp=sqrt(3)*(1e-9)*sqrt(Pla_ne/1.40251e20);//  sqrt(3)*re/lambda_L; classical electron radius in lambda_p
-	double theta_x;
-	double phi_y;
-	double Rcurve;   // radius of curvature.
-	double omegac;   //critical frequency.
+	WDOUBLE reinkp=sqrt(3)*(1e-9)*sqrt(Pla_ne/1.40251e20);//  sqrt(3)*re/lambda_L; classical electron radius in lambda_p
+	WDOUBLE theta_x;
+	WDOUBLE phi_y;
+	WDOUBLE Rcurve;   // radius of curvature.
+	WDOUBLE omegac;   //critical frequency.
 
- 	double ThetaMax = XRayDetector->ThetaMax;
- 	double PhiMax   = XRayDetector->PhiMax;
-	double OmegaMax = XRayDetector->OmegaMax;
-	double OmegaMin = XRayDetector->OmegaMin;
+ 	WDOUBLE ThetaMax = XRayDetector->ThetaMax;
+ 	WDOUBLE PhiMax   = XRayDetector->PhiMax;
+	WDOUBLE OmegaMax = XRayDetector->OmegaMax;
+	WDOUBLE OmegaMin = XRayDetector->OmegaMin;
 
 	int NOmega = XRayDetector->NOmega;
 	int NTheta = XRayDetector->NTheta;
 	int NPhi   = XRayDetector->NPhi;
 
-	double dtheta =2*ThetaMax/NTheta;
-	double dphi   =2*PhiMax/NPhi;
-	double domega =(OmegaMax-OmegaMin)/NOmega;  //in KeV
+	WDOUBLE dtheta =2*ThetaMax/NTheta;
+	WDOUBLE dphi   =2*PhiMax/NPhi;
+	WDOUBLE domega =(OmegaMax-OmegaMin)/NOmega;  //in KeV
 
-	double minga=1e20;
+	WDOUBLE minga=1e20;
 
 
 	p = p_Particle;
@@ -111,6 +114,10 @@ void Mesh::PushParticle()
 
 		for (n=0; n<Nt; n++)
 		{
+
+			i=p->idx_i;
+			j=p->idx_j;
+
 			//=======================================
 			//= Step-(1) half-position push in time =
 			x0=x;
@@ -123,134 +130,159 @@ void Mesh::PushParticle()
 			x += 0.5*dtt*   px/gamma;
 			y += 0.5*dtt*   py/gamma;
 			z += 0.5*dtt*(1-pz/gamma);
+
+			Cell *ctmp = &GetCell(i,j,0);
+			while(x>(ctmp->Xcord+ctmp->dx*0.5) && i<GridX) { p->idx_i++;  i++; ctmp=&GetCell(i,j,0); }
+			while(x<(ctmp->Xcord-ctmp->dx*0.5) && i>1) 	   { p->idx_i--;  i--; ctmp=&GetCell(i,j,0); }
+			while(y>(ctmp->Ycord+ctmp->dy*0.5) && j<GridY) { p->idx_j++;  j++; ctmp=&GetCell(i,j,0); }
+			while(y<(ctmp->Ycord-ctmp->dy*0.5) && j>1) 	   { p->idx_j--;  j--; ctmp=&GetCell(i,j,0); }
+
 			//=======================================
 
-
 			//=============================//
-			if(RankIdx_X == 1	&& x<=Offset_X) break;
-			if(RankIdx_X == Xpa && x>=Xmax)	    break; 
-			if(RankIdx_Y == 1	&& y<=Offset_Y) break;
-			if(RankIdx_Y == Ypa && y>=Ymax)     break;
+			if(RankIdx_X == 1	&& i==0) 		break;
+			if(RankIdx_X == Xpa && i==GridX+1)	break; 
+			if(RankIdx_Y == 1	&& j==0) 		break;
+			if(RankIdx_Y == Ypa && j==GridY+1)  break;
 			//=============================//
 
-
-			ddx = x-(Offset_X-dx*0.5);
-			ddy = y-(Offset_Y-dy*0.5);
 			ddz = z;
 			ddz2= z-0.5*dz;
 
-			i = floor(ddx/dx);
-			j = floor(ddy/dy);
 			k = floor(ddz/dz);
 			k2= floor(ddz2/dz);
-
-			//=============================//
-			if(i<0) i = 0;
-			if(i>GridX) i = GridX;
-			if(j<0) j = 0;
-			if(j>GridY) j = GridY;
 			if(k<0 || k > GridZ-2 || k2<0 || k2>GridZ-2) break;
-			//=============================//
+	
 
 			//==============================
 			//=====wakefields===============
-			wmmm = (i+1-ddx/dx) *(j+1-ddy/dy) *(k+1-ddz/dz);
-			wmpm = (i+1-ddx/dx) *(ddy/dy-j)   *(k+1-ddz/dz);
-			wpmm = (ddx/dx-i)   *(j+1-ddy/dy) *(k+1-ddz/dz);
-			wppm = (ddx/dx-i)   *(ddy/dy-j)   *(k+1-ddz/dz);
+			c[0] = &GetCell(i-1,j-1,k); c[9] =  &GetCell(i-1,j-1,k+1);
+			c[1] = &GetCell(i-1,j  ,k); c[10] = &GetCell(i-1,j  ,k+1);
+			c[2] = &GetCell(i-1,j+1,k); c[11] = &GetCell(i-1,j+1,k+1);
 
-			wmmp = (i+1-ddx/dx) *(j+1-ddy/dy) *(ddz/dz-k);
-			wmpp = (i+1-ddx/dx) *(ddy/dy-j)   *(ddz/dz-k);
-			wpmp = (ddx/dx-i)   *(j+1-ddy/dy) *(ddz/dz-k);
-			wppp = (ddx/dx-i)   *(ddy/dy-j)   *(ddz/dz-k);
+			c[3] = &GetCell(i,  j-1,k); c[12] = &GetCell(i,  j-1,k+1);
+			c[4] = &GetCell(i,  j  ,k); c[13] = &GetCell(i,  j  ,k+1);
+			c[5] = &GetCell(i,  j+1,k); c[14] = &GetCell(i,  j+1,k+1);
+		
+			c[6] = &GetCell(i+1,j-1,k); c[15] = &GetCell(i+1,j-1,k+1);
+			c[7] = &GetCell(i+1,j  ,k); c[16] = &GetCell(i+1,j  ,k+1);
+			c[8] = &GetCell(i+1,j+1,k); c[17] = &GetCell(i+1,j+1,k+1);
+			Cell &ccc= *c[4];
 
-			Cell &cmmm = GetCell(i,   j,   k);
-			Cell &cmpm = GetCell(i,   j+1, k);
-			Cell &cpmm = GetCell(i+1, j,   k);
-			Cell &cppm = GetCell(i+1, j+1, k);
+			ddx=ccc.dx;
+			ddy=ccc.dy;
+			sx=ddx;  //- re-size
+			sy=ddy;  //- re-size
+			sxy=sx*sy;
 
-			Cell &cmmp = GetCell(i,   j,   k+1);
-			Cell &cmpp = GetCell(i,   j+1, k+1);
-			Cell &cpmp = GetCell(i+1, j,   k+1);
-			Cell &cppp = GetCell(i+1, j+1, k+1);
+			WDOUBLE deltaxm=std::max(sx*0.5-(ddx*0.5+x-ccc.Xcord),0.0);
+			WDOUBLE deltaym=std::max(sy*0.5-(ddy*0.5+y-ccc.Ycord),0.0);
 
+			WDOUBLE deltaxp=std::max(sx*0.5-(ddx*0.5-x+ccc.Xcord),0.0);
+			WDOUBLE deltayp=std::max(sy*0.5-(ddy*0.5-y+ccc.Ycord),0.0);
 
-			Bx = wmmm*cmmm.W_Bx  + wmpm*cmpm.W_Bx  + wpmm*cpmm.W_Bx  + wppm*cppm.W_Bx
-			   + wmmp*cmmp.W_Bx  + wmpp*cmpp.W_Bx  + wpmp*cpmp.W_Bx  + wppp*cppp.W_Bx;
-			
-			By = wmmm*cmmm.W_By  + wmpm*cmpm.W_By  + wpmm*cpmm.W_By  + wppm*cppm.W_By
-			   + wmmp*cmmp.W_By  + wmpp*cmpp.W_By  + wpmp*cpmp.W_By  + wppp*cppp.W_By;
-			
-			Bz = wmmm*cmmm.W_Bz  + wmpm*cmpm.W_Bz  + wpmm*cpmm.W_Bz  + wppm*cppm.W_Bz
-			   + wmmp*cmmp.W_Bz  + wmpp*cmpp.W_Bz  + wpmp*cpmp.W_Bz  + wppp*cppp.W_Bz;
-			
+			WDOUBLE deltaxc=sx-deltaxm-deltaxp;
+			WDOUBLE deltayc=sy-deltaym-deltayp;
 
+			WDOUBLE deltaz=(ddz/dz-k);
+		
+			weight[0] = deltaxm*deltaym/sxy;
+			weight[1] = deltaxm*deltayc/sxy;
+			weight[2] = deltaxm*deltayp/sxy;
+
+			weight[3] = deltaxc*deltaym/sxy;
+			weight[4] = deltaxc*deltayc/sxy;
+			weight[5] = deltaxc*deltayp/sxy;
+
+			weight[6] = deltaxp*deltaym/sxy;
+			weight[7] = deltaxp*deltayc/sxy;
+			weight[8] = deltaxp*deltayp/sxy;
+
+			for(int n=0;n<9;n++)
+			{
+				weight[n+9]=weight[n]*deltaz;
+				weight[n] *=(1-deltaz);
+			}
+
+			Bx=By=Bz=Ex=Ey=Ez=0.0;
+			for(int n=0;n<18;n++)
+			{
+				Bx+=c[n]->W_Bx*weight[n];
+				By+=c[n]->W_By*weight[n];
+				Bz+=c[n]->W_Bz*weight[n];
+
+				Ex-=c[n]->W_Ex*weight[n];
+				Ey-=c[n]->W_Ey*weight[n];
+				Ez+=c[n]->W_Ez*weight[n];
+			}
 			// Ex= - dpsi/dy + By
-			Ex =-(wmmm*cmmm.W_Ex  + wmpm*cmpm.W_Ex  + wpmm*cpmm.W_Ex  + wppm*cppm.W_Ex
-			    + wmmp*cmmp.W_Ex  + wmpp*cmpp.W_Ex  + wpmp*cpmp.W_Ex  + wppp*cppp.W_Ex) + By;
-			
+			Ex += By;
 			// Ey= - dpsi/dy - Bx
-			Ey =-(wmmm*cmmm.W_Ey  + wmpm*cmpm.W_Ey  + wpmm*cpmm.W_Ey  + wppm*cppm.W_Ey
-			    + wmmp*cmmp.W_Ey  + wmpp*cmpp.W_Ey  + wpmp*cpmp.W_Ey  + wppp*cppp.W_Ey) - Bx;
+			Ey -= Bx;
 			
-
-			Ez = wmmm*cmmm.W_Ez  + wmpm*cmpm.W_Ez  + wpmm*cpmm.W_Ez  + wppm*cppm.W_Ez
-			   + wmmp*cmmp.W_Ez  + wmpp*cmpp.W_Ez  + wpmp*cpmp.W_Ez  + wppp*cppp.W_Ez;
-			//=====wakefields===============
-			//==============================
-
-
-
 			//===============================
 			//=====laserfields===============
 			ExlR = EylR = EzlR = 0.0;
 			BxlR = BylR = BzlR = 0.0;
+			
 			if(NFreqs>0)
 			{
 
-			wmmm = (i+1-ddx/dx) *(j+1-ddy/dy) *(k2+1-ddz2/dz);
-			wmpm = (i+1-ddx/dx) *(ddy/dy-j)   *(k2+1-ddz2/dz);
-			wpmm = (ddx/dx-i)   *(j+1-ddy/dy) *(k2+1-ddz2/dz);
-			wppm = (ddx/dx-i)   *(ddy/dy-j)   *(k2+1-ddz2/dz);
+			c[0] = &GetCell(i-1,j-1,k2); c[9]  = &GetCell(i-1,j-1,k2+1);
+			c[1] = &GetCell(i-1,j  ,k2); c[10] = &GetCell(i-1,j  ,k2+1);
+			c[2] = &GetCell(i-1,j+1,k2); c[11] = &GetCell(i-1,j+1,k2+1);
 
-			wmmp = (i+1-ddx/dx) *(j+1-ddy/dy) *(ddz2/dz-k2);
-			wmpp = (i+1-ddx/dx) *(ddy/dy-j)   *(ddz2/dz-k2);
-			wpmp = (ddx/dx-i)   *(j+1-ddy/dy) *(ddz2/dz-k2);
-			wppp = (ddx/dx-i)   *(ddy/dy-j)   *(ddz2/dz-k2);
+			c[3] = &GetCell(i,  j-1,k2); c[12] = &GetCell(i,  j-1,k2+1);
+			c[4] = &GetCell(i,  j  ,k2); c[13] = &GetCell(i,  j  ,k2+1);
+			c[5] = &GetCell(i,  j+1,k2); c[14] = &GetCell(i,  j+1,k2+1);
+		
+			c[6] = &GetCell(i+1,j-1,k2); c[15] = &GetCell(i+1,j-1,k2+1);
+			c[7] = &GetCell(i+1,j  ,k2); c[16] = &GetCell(i+1,j  ,k2+1);
+			c[8] = &GetCell(i+1,j+1,k2); c[17] = &GetCell(i+1,j+1,k2+1);
 
-			Cell &cmmm2 = GetCell(i,   j,   k2);
-			Cell &cmpm2 = GetCell(i,   j+1, k2);
-			Cell &cpmm2 = GetCell(i+1, j,   k2);
-			Cell &cppm2 = GetCell(i+1, j+1, k2);
+			WDOUBLE deltaxm=std::max(sx*0.5-(ddx*0.5+x-ccc.Xcord),0.0);
+			WDOUBLE deltaym=std::max(sy*0.5-(ddy*0.5+y-ccc.Ycord),0.0);
 
-			Cell &cmmp2 = GetCell(i,   j,   k2+1);
-			Cell &cmpp2 = GetCell(i,   j+1, k2+1);
-			Cell &cpmp2 = GetCell(i+1, j,   k2+1);
-			Cell &cppp2 = GetCell(i+1, j+1, k2+1);
+			WDOUBLE deltaxp=std::max(sx*0.5-(ddx*0.5-x+ccc.Xcord),0.0);
+			WDOUBLE deltayp=std::max(sy*0.5-(ddy*0.5-y+ccc.Ycord),0.0);
+
+			WDOUBLE deltaxc=sx-deltaxm-deltaxp;
+			WDOUBLE deltayc=sy-deltaym-deltayp;
+
+			WDOUBLE deltaz=(ddz2/dz-k2);
+		
+			weight[0] = deltaxm*deltaym/sxy;
+			weight[1] = deltaxm*deltayc/sxy;
+			weight[2] = deltaxm*deltayp/sxy;
+
+			weight[3] = deltaxc*deltaym/sxy;
+			weight[4] = deltaxc*deltayc/sxy;
+			weight[5] = deltaxc*deltayp/sxy;
+
+			weight[6] = deltaxp*deltaym/sxy;
+			weight[7] = deltaxp*deltayc/sxy;
+			weight[8] = deltaxp*deltayp/sxy;
+
+			for(int n=0;n<9;n++)
+			{
+				weight[n+9]=weight[n]*deltaz;
+				weight[n] *=weight[n]*(1-deltaz);
+			}
 
 			for(NF=0; NF<NFreqs; NF++)
 			{
-				
-				Exl = wmmm*cmmm2.L_Ex[NF] + wmpm*cmpm2.L_Ex[NF] + wpmm*cpmm2.L_Ex[NF] + wppm*cppm2.L_Ex[NF]
-					+ wmmp*cmmp2.L_Ex[NF] + wmpp*cmpp2.L_Ex[NF] + wpmp*cpmp2.L_Ex[NF] + wppp*cppp2.L_Ex[NF];
-
-				Eyl = wmmm*cmmm2.L_Ey[NF] + wmpm*cmpm2.L_Ey[NF] + wpmm*cpmm2.L_Ey[NF] + wppm*cppm2.L_Ey[NF]
-					+ wmmp*cmmp2.L_Ey[NF] + wmpp*cmpp2.L_Ey[NF] + wpmp*cpmp2.L_Ey[NF] + wppp*cppp2.L_Ey[NF];
-
-				Ezl = wmmm*cmmm2.L_Ez[NF] + wmpm*cmpm2.L_Ez[NF] + wpmm*cpmm2.L_Ez[NF] + wppm*cppm2.L_Ez[NF]
-					+ wmmp*cmmp2.L_Ez[NF] + wmpp*cmpp2.L_Ez[NF] + wpmp*cpmp2.L_Ez[NF] + wppp*cppp2.L_Ez[NF];
-
-				Bxl = wmmm*cmmm2.L_Bx[NF] + wmpm*cmpm2.L_Bx[NF] + wpmm*cpmm2.L_Bx[NF] + wppm*cppm2.L_Bx[NF]
-					+ wmmp*cmmp2.L_Bx[NF] + wmpp*cmpp2.L_Bx[NF] + wpmp*cpmp2.L_Bx[NF] + wppp*cppp2.L_Bx[NF];
-
-				Byl = wmmm*cmmm2.L_By[NF] + wmpm*cmpm2.L_By[NF] + wpmm*cpmm2.L_By[NF] + wppm*cppm2.L_By[NF]
-					+ wmmp*cmmp2.L_By[NF] + wmpp*cmpp2.L_By[NF] + wpmp*cpmp2.L_By[NF] + wppp*cppp2.L_By[NF];
-
-				Bzl = wmmm*cmmm2.L_Bz[NF] + wmpm*cmpm2.L_Bz[NF] + wpmm*cpmm2.L_Bz[NF] + wppm*cppm2.L_Bz[NF]
-					+ wmmp*cmmp2.L_Bz[NF] + wmpp*cmpp2.L_Bz[NF] + wpmp*cpmp2.L_Bz[NF] + wppp*cppp2.L_Bz[NF];
+				Exl=Eyl=Ezl=Bxl=Byl=Bzl=0.0;
+				for(int n=0;n<18;n++)
+				{
+					Exl+=c[n]->L_Ex[NF] *weight[n];
+					Eyl+=c[n]->L_Ey[NF] *weight[n];
+					Ezl+=c[n]->L_Ez[NF] *weight[n];
+					Bxl+=c[n]->L_Bx[NF] *weight[n];
+					Byl+=c[n]->L_By[NF] *weight[n];
+					Bzl+=c[n]->L_Bz[NF] *weight[n];
+				}
 
 				OmegaL = p_domain()->OmegaL[NF];
-
 				ExlR += (Exl*exp(-ci*OmegaL*z)).real();
 				EylR += (Eyl*exp(-ci*OmegaL*z)).real();
 				EzlR += (Ezl*exp(-ci*OmegaL*z)).real();
@@ -262,7 +294,6 @@ void Mesh::PushParticle()
 			}
 			//=====laserfields===============
 			//===============================
-
 
 			//===========All fields==============
 			ExlR *=(-q2m); EylR *=(-q2m); EzlR *=(-q2m);
@@ -280,7 +311,6 @@ void Mesh::PushParticle()
 			pyp = py + 0.5*dtt*(Ey+EylR);
 			pzp = pz + 0.5*dtt*(Ez+EzlR);
 			//=======================================
-
 
 			//=======================================
 			//= Step-(3) Full-Magnetic push in time =
@@ -329,9 +359,9 @@ void Mesh::PushParticle()
 
 				theta_x = px/pz;
 				phi_y   = py/pz;
-				double vs =(px*px + py*py + pz*pz)/gamma/gamma;
-				double vvs=( (px-px0)*(px-px0) + (py-py0)*(py-py0) + (pz-pz0)*(pz-pz0) )/gamma/gamma/dtt/dtt;
-				double vdvv= ( (px-px0)*px+ (py-py0)*py + (pz-pz0)*pz )/gamma/gamma/dtt;
+				WDOUBLE vs =(px*px + py*py + pz*pz)/gamma/gamma;
+				WDOUBLE vvs=( (px-px0)*(px-px0) + (py-py0)*(py-py0) + (pz-pz0)*(pz-pz0) )/gamma/gamma/dtt/dtt;
+				WDOUBLE vdvv= ( (px-px0)*px+ (py-py0)*py + (pz-pz0)*pz )/gamma/gamma/dtt;
 				if(vs*vvs-vdvv*vdvv==0)
 				{
 					Rcurve  = 1e20;
@@ -345,8 +375,8 @@ void Mesh::PushParticle()
 				}
 				
 				// calculate wavepacket energy
-				double k1=sqrt((x-x0)*(x-x0)+(y-y0)*(y-y0)+(dtt-(z-z0))*(dtt-(z-z0)))/Rcurve*gamma*reinkp;
-				k1 *=p->weight;
+				WDOUBLE k1=sqrt((x-x0)*(x-x0)+(y-y0)*(y-y0)+(dtt-(z-z0))*(dtt-(z-z0)))/Rcurve*gamma*reinkp;
+				k1 *=p->weight*p->sx*p->sy;
 
 				omegac *= 1.2398*sqrt(Pla_ne/1.114855e21)/1000;
 
@@ -378,6 +408,11 @@ void Mesh::PushParticle()
 
 		if(pz>2&&gamma<minga) minga=gamma;
 
+		Cell *ctmp = &GetCell(i,j,0);
+		while(x>(ctmp->Xcord+ctmp->dx*0.5) && i<GridX+1) { p->idx_i++;  i++; ctmp=&GetCell(i,j,0); }
+		while(x<(ctmp->Xcord-ctmp->dx*0.5) && i>0) 	     { p->idx_i--;  i--; ctmp=&GetCell(i,j,0); }
+		while(y>(ctmp->Ycord+ctmp->dy*0.5) && j<GridY+1) { p->idx_j++;  j++; ctmp=&GetCell(i,j,0); }
+		while(y<(ctmp->Ycord-ctmp->dy*0.5) && j>0) 	     { p->idx_j--;  j--; ctmp=&GetCell(i,j,0); }
 		p = p->p_PrevPart;
 
 	}
@@ -392,8 +427,8 @@ void Mesh::PushParticle()
 
 void Mesh::SetNewTimeStep()
 {
-	double gmin;
-	MPI_Allreduce(&minGamma, &gmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	WDOUBLE gmin;
+	MPI_Allreduce(&minGamma, &gmin, 1, MPI_WDOUBLE, MPI_MIN, MPI_COMM_WORLD);
 	dt= dt0*sqrt(gmin);
 	p_domain()->set_new_dt(dt);
 
@@ -436,99 +471,135 @@ Particle* Mesh::Reconnect(Particle* p_Part)
 void Mesh::ExchangeP()
 {
 	Particle *p = NULL;
-	
+	Commute *p_COMM = p_domain()->p_Com();
 	//=========Send and Receive Buf Size===============
-	double bufsize = p_domain()->p_Com()->Get_bufsize();
+	WDOUBLE bufsize = p_domain()->p_Com()->Get_bufsize();
 	bufsize *= (GridX*SOU_DIM*2.0/SDP_DIM);
 	//=================================================
 
-	double xp, yp, zp;
+	WDOUBLE xp, yp, zp;
 
 	int Xpa  = p_domain()->p_Partition()->GetXpart();
 	int Ypa  = p_domain()->p_Partition()->GetYpart();
 
-	double Xmax = Offset_X+GridX*dx;
-	double Ymax = Offset_Y+GridY*dy;
-	double Zmax = (GridZ-2)*dz;
 
-	double Xsize = GridX*dx*Xpa;
-	double Ysize = GridY*dy*Ypa;
+	WDOUBLE Zmax = (GridZ-2)*dz;
 
-	int Sendxm, Sendxp, Sendym, Sendyp;
+	std::vector<int> SendN(8,0);//Sendmm, Sendmp, Sendpm, Sendpp; Sendxm, Sendxp, Sendym, Sendyp;
+
 	int S_SUM, A_SUM;
+
+	int i;
+	int j;
 
 	while(1)
 	{
 
-		Sendxm = Sendxp = Sendym = Sendyp = 0; 
 		p = p_Particle;
+
+		SendN[0]=SendN[1]=SendN[2]=SendN[3]=SendN[4]=SendN[5]=SendN[6]=SendN[7]=0;
+		
+		WDOUBLE* SeXm=p_COMM->SendSourceXm;
+		WDOUBLE* SeXp=p_COMM->SendSourceXp;
+		WDOUBLE* SeYm=p_COMM->SendSourceYm;
+		WDOUBLE* SeYp=p_COMM->SendSourceYp;
+
+		WDOUBLE* Semm=p_COMM->SendSourcemm;
+		WDOUBLE* Semp=p_COMM->SendSourcemp;
+		WDOUBLE* Sepm=p_COMM->SendSourcepm;
+		WDOUBLE* Sepp=p_COMM->SendSourcepp;
+
 		while (p)
 		{
-			xp = p-> x;
-			yp = p-> y;
+			i=p->idx_i;
+			j=p->idx_j;
 			zp = p-> z;
 
-		//=================================================
-		//============Partectory Outside Boundary =========
-		//=================================================
-		if(p_domain()->Get_BC()==1)
-		{
-			
-		if(zp<0 || zp>Zmax)				     { p = Reconnect(p); continue;}
-		if(RankIdx_X ==1	&& xp<=Offset_X) { p = Reconnect(p); continue;}
-		if(RankIdx_X == Xpa && xp>=Xmax)     { p = Reconnect(p); continue;}
-		if(RankIdx_Y == 1	&& yp<=Offset_Y) { p = Reconnect(p); continue;}
-		if(RankIdx_Y == Ypa && yp>=Ymax)     { p = Reconnect(p); continue;}
+			//=================================================
+			//============Partectory Outside Boundary =========
+			//=================================================
+			if(zp<=dz || zp>=Zmax)	{ p = Reconnect(p); continue;}
 
-		}
+			if(p_domain()->Get_BC()==1)
+			{
+				if(RankIdx_X ==1	&& i==0) 	   { p = Reconnect(p); continue;}
+				if(RankIdx_X == Xpa && i==GridX+1) { p = Reconnect(p); continue;}
+				if(RankIdx_Y == 1	&& j==0) 	   { p = Reconnect(p); continue;}
+				if(RankIdx_Y == Ypa && j==GridY+1) { p = Reconnect(p); continue;}
+			}
 
-		//==================================================
+			//==================================================
+			if(i==0&&j==0)
+			{
+				SendN[0] +=1;
+				PackP(p, Semm);
+				p = Reconnect(p);
+				continue;
+			}
 
-		//====================================
-		//====== Send to left Neighbor =======
-		//====================================
-		if(xp < Offset_X)
-		{
-			if(RankIdx_X ==1) 	p-> x = xp + Xsize;
-			Sendxm +=1;
-			PackP(p, Sendxm, 0);
-			p = Reconnect(p);
-		}
-		//====================================
-		//====== Send to right Neighbor ======
-		//====================================
-		else if(xp > Xmax)
-		{
-			if(RankIdx_X ==Xpa) p-> x = xp - Xsize;
-			Sendxp +=1;
-			PackP(p, Sendxp, 1);
-			p = Reconnect(p);
-		}
-		//====================================
-		//====== Send to Neighbor Below ======
-		//====================================
-		else if(yp < Offset_Y)
-		{
-			if(RankIdx_Y ==1) 	p-> y = yp + Ysize;
-			Sendym +=1;
-			PackP(p, Sendym, 2);
-			p = Reconnect(p);
-
-		}
-		//====================================
-		//====== Send to Neighbor Above ======
-		//====================================
-		else if(yp > Ymax)
-		{
-			if(RankIdx_Y ==Ypa) p-> y = yp - Ysize;
-			Sendyp +=1;
-			PackP(p, Sendyp, 3);
-			p = Reconnect(p);
-		}
-		else
-		{
+			if(i==0&&j==GridY+1)
+			{
+				SendN[1] +=1;
+				PackP(p, Semp);
+				p = Reconnect(p);
+				continue;
+			}
+			if(i==GridX+1&&j==0)
+			{
+				SendN[2] +=1;
+				PackP(p, Sepm);
+				p = Reconnect(p);
+				continue;
+			}
+			if(i==GridX+1&&j==GridY+1)
+			{
+				SendN[3] +=1;
+				PackP(p, Sepp);
+				p = Reconnect(p);
+				continue;
+			}
+			//====================================
+			//====== Send to left Neighbor =======
+			//====================================
+			if(i==0)
+			{
+				SendN[4] +=1;
+				PackP(p, SeXm);
+				p = Reconnect(p);
+				continue;
+			}
+			//====================================
+			//====== Send to right Neighbor ======
+			//====================================
+			if(i==GridX+1)
+			{
+				SendN[5] +=1;
+				PackP(p, SeXp);
+				p = Reconnect(p);
+				continue;
+			}
+			//====================================
+			//====== Send to Neighbor Below ======
+			//====================================
+			if(j==0)
+			{
+				SendN[6] +=1;
+				PackP(p, SeYm);
+				p = Reconnect(p);
+				continue;
+			}
+			//====================================
+			//====== Send to Neighbor Above ======
+			//====================================
+			if(j==GridY+1)
+			{
+				SendN[7] +=1;
+				PackP(p, SeYp);
+				p = Reconnect(p);
+				continue;
+			}
 			p = p->p_PrevPart;
-		}
+		
 
 		}
 
@@ -536,25 +607,19 @@ void Mesh::ExchangeP()
 		//=====================================================================
 		//======== Exchange Partectoryies with Neighboring Processors =========
 		//=====================================================================
-		int maxsend=Sendxm;
-		if(bufsize<Sendxm || bufsize<Sendxp || bufsize<Sendym || bufsize<Sendyp)
+		if(bufsize/GridX<*std::max_element(SendN.begin(), SendN.begin()+4)||bufsize<*std::max_element(SendN.begin()+5, SendN.end()))
 		{	
-			if(Sendxp>maxsend) maxsend=Sendxp;
-			if(Sendyp>maxsend) maxsend=Sendyp;
-			if(Sendym>maxsend) maxsend=Sendym;
-
 			printf("==== Mesh: At Rank: %5d. ==================\n",Rank);
 			std::cout << "==== Mesh: Send Too Many Particles.      ====\n";
 			std::cout << "==== Mesh: May Cause Memory Problems.    ====\n";
-			printf("==== Mesh: Try Buf Size: %3d           ====\n",maxsend/GridX);
+			// printf("==== Mesh: Try Buf Size: %3d           ====\n",maxsend/GridX);
 			
 		}
 
-		S_SUM = Sendxm+Sendxp+Sendym+Sendyp;
+		S_SUM = SendN[0]+SendN[1]+SendN[2]+SendN[3]+SendN[4]+SendN[5]+SendN[6]+SendN[7];
 		MPI_Allreduce(&S_SUM, &A_SUM, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 		if( A_SUM == 0 ) {break;};
-		p_domain()->p_Com()->DoCommuteT(COMMU_P, Sendxm, Sendxp, Sendym, Sendyp);
-
+		p_domain()->p_Com()->DoCommuteT(COMMU_P, SendN);
 	}
 
 	return;
@@ -562,119 +627,39 @@ void Mesh::ExchangeP()
 
 
 
-void Mesh::PackP(Particle* p_Part, int Sendn, int where)
+void Mesh::PackP(Particle* p_Part, WDOUBLE* &Se)
 {
-	Commute *p_COMM = p_domain()->p_Com();
-
-	switch(where)
-	{
-
-		case 0:
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 0] = p_Part-> x;   	
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 1] = p_Part-> y;   	
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 2] = p_Part-> z;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 3] = p_Part-> x0;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 4] = p_Part-> y0;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 5] = p_Part-> z0;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 6] = p_Part-> px;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 7] = p_Part-> py;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 8] = p_Part-> pz;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM + 9] = p_Part-> Ex0;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +10] = p_Part-> Ey0;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +11] = p_Part-> Ez0;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +12] = p_Part-> type*1.0;	
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +13] = p_Part-> q2m;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +14] = p_Part-> weight;
-
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +15] = p_Part-> Wxw;	
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +16] = p_Part-> Wyw;	
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +17] = p_Part-> Wzw;
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +18] = p_Part-> Wxl;
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +19] = p_Part-> Wyl;		
-		p_COMM->SendSourceXm[(Sendn-1)*SDP_DIM +20] = p_Part-> Wzl;
-
-		break;
 	
-		case 1:
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 0] = p_Part-> x;   	
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 1] = p_Part-> y;   	
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 2] = p_Part-> z;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 3] = p_Part-> x0;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 4] = p_Part-> y0;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 5] = p_Part-> z0;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 6] = p_Part-> px;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 7] = p_Part-> py;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 8] = p_Part-> pz;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM + 9] = p_Part-> Ex0;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +10] = p_Part-> Ey0;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +11] = p_Part-> Ez0;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +12] = p_Part-> type*1.0;	
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +13] = p_Part-> q2m;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +14] = p_Part-> weight;
+	*Se = p_Part-> x;  Se++;
+	*Se = p_Part-> y;  Se++;
+	*Se = p_Part-> z;  Se++;
 
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +15] = p_Part-> Wxw;	
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +16] = p_Part-> Wyw;	
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +17] = p_Part-> Wzw;
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +18] = p_Part-> Wxl;
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +19] = p_Part-> Wyl;		
-		p_COMM->SendSourceXp[(Sendn-1)*SDP_DIM +20] = p_Part-> Wzl;
+	*Se = p_Part-> x0; Se++;
+	*Se = p_Part-> y0; Se++;
+	*Se = p_Part-> z0; Se++;
 
+	*Se = p_Part-> px; Se++;
+	*Se = p_Part-> py; Se++;
+	*Se = p_Part-> pz; Se++;
 
-		break;
+	*Se = p_Part-> Ex0; Se++;
+	*Se = p_Part-> Ey0; Se++;
+	*Se = p_Part-> Ez0; Se++;
 
-		case 2:
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 0] = p_Part-> x;   	
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 1] = p_Part-> y;   	
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 2] = p_Part-> z;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 3] = p_Part-> x0;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 4] = p_Part-> y0;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 5] = p_Part-> z0;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 6] = p_Part-> px;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 7] = p_Part-> py;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 8] = p_Part-> pz;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM + 9] = p_Part-> Ex0;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +10] = p_Part-> Ey0;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +11] = p_Part-> Ez0;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +12] = p_Part-> type*1.0;	
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +13] = p_Part-> q2m;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +14] = p_Part-> weight;
+	*Se = p_Part-> type*1.0; Se++;
+	*Se = p_Part-> q2m; 	 Se++;
+	*Se = p_Part-> weight;   Se++;
 
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +15] = p_Part-> Wxw;	
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +16] = p_Part-> Wyw;	
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +17] = p_Part-> Wzw;
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +18] = p_Part-> Wxl;
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +19] = p_Part-> Wyl;		
-		p_COMM->SendSourceYm[(Sendn-1)*SDP_DIM +20] = p_Part-> Wzl;
+	*Se = p_Part-> Wxw; Se++;
+	*Se = p_Part-> Wyw; Se++;
+	*Se = p_Part-> Wzw; Se++;
 
+	*Se = p_Part-> Wxl; Se++;
+	*Se = p_Part-> Wyl; Se++;
+	*Se = p_Part-> Wzl; Se++;
 
-		break;
-
-		case 3:
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 0] = p_Part-> x;   	
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 1] = p_Part-> y;   	
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 2] = p_Part-> z;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 3] = p_Part-> x0;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 4] = p_Part-> y0;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 5] = p_Part-> z0;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 6] = p_Part-> px;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 7] = p_Part-> py;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 8] = p_Part-> pz;
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM + 9] = p_Part-> Ex0;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +10] = p_Part-> Ey0;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +11] = p_Part-> Ez0;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +12] = p_Part-> type*1.0;	
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +13] = p_Part-> q2m;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +14] = p_Part-> weight;
-
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +15] = p_Part-> Wxw;	
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +16] = p_Part-> Wyw;	
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +17] = p_Part-> Wzw;
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +18] = p_Part-> Wxl;
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +19] = p_Part-> Wyl;		
-		p_COMM->SendSourceYp[(Sendn-1)*SDP_DIM +20] = p_Part-> Wzl;
-
-		break;
-	}
+	*Se = p_Part-> sx; Se++;
+	*Se = p_Part-> sy; Se++;
 
 	return;
 }

@@ -63,15 +63,14 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 	AddEntry((char*)"SOR_Omega", 	&omega, 1.5);
 	AddEntry((char*)"ErrorLimit", 	&EpsLim, 1e-6);
 	
+	BottomType=0; //May-25-2021; Tianhong.
 
-	  if (f)
-    {
+	if (f)
+   	{
       rewind(f);
       read(f);
-    }
+   	}
 
-
-   
     Rank = rank;
 
 	int i,j,n;
@@ -83,18 +82,18 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 	Xpa = p_domain()->p_Partition()->GetXpart();
 	Ypa = p_domain()->p_Partition()->GetYpart();
 
-	dxdy = (p_domain()-> Get_dx())*(p_domain()-> Get_dy());
-
 	GridXY = XGridN*YGridN*Xpa*Ypa;
+
+
 
 	// initialize
 	for (i=0; i<Layer_buf; i++)
 	{
-    LayerGridX[i] = 0;
-    LayerGridY[i] = 0;
+    	LayerGridX[i] = 0;
+    	LayerGridY[i] = 0;
 	}
-	// Layer index starts from 1;
 
+	// Layer index starts from 1;
 	LayerGridX[1] = XGridN;
 	LayerGridY[1] = YGridN;
 
@@ -109,149 +108,163 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 	// define layer and grid number at each layer//
 // ---------------------------------------------------------
 
-//==========================================================//
-//================= X Direction ============================//
-	int gridmin = 2;
-	MPI_Layer = 1;
 
+	//May-25-2021- Tianhong updates; 
+	std::vector< std::vector< std::pair<WDOUBLE,int> > > Dx;
+	std::vector< std::pair<WDOUBLE,int> > tmp;
+
+	for(i=0;i<p_Meshs->GridsTmp.size();i++)
+	{
+		tmp.push_back({p_Meshs->GridsTmp[i],i}); // cell size and grand index
+	}
+	Dx.push_back(tmp);
+
+	int gridmin=2;
+
+	MPI_Layer = 1;
+	n=1;
 	while(gridmin>1)
 	{
-    	i = 1;
-    	MPI_Layer += 1;
-    	while(i<=XGridN*Xpa)
+		tmp.clear();
+		tmp.push_back({0.0,0}); //left ghost
+
+		MPI_Layer++;
+		n++;
+		for(int i=1;i<Dx[n-2].size()-1;i+=2)
+		{
+			WDOUBLE nextsize=Dx[n-2][i].first+(Dx[n-2][i-1].first+Dx[n-2][i+1].first)*0.5;
+
+			tmp.push_back( {nextsize, Dx[n-2][i].second} );
+
+
+			if(Dx[n-2][i].second >= ((RankIdx_X-1)*XGridN+1) && Dx[n-2][i].second<= (RankIdx_X)*XGridN )
     		{
-    			if(i >= ((RankIdx_X-1)*XGridN+1) & i<= (RankIdx_X)*XGridN )
-    			{
-					LayerGridX[MPI_Layer] += 1;
-        		}
-				i += pow(2,(MPI_Layer-1));
-			}
+				LayerGridX[MPI_Layer] += 1;
+        	}
 
-			MPI_Allreduce(&LayerGridX[MPI_Layer], &gridmin, 1, MPI_INT, MPI_MIN,MPI_COMM_WORLD);
-	}
-//================= X Direction ============================//
-//==========================================================//
-
-
-
-
-//==========================================================//
-//================= Y Direction ============================//
-
-	gridmin = 2;
-	MPI_Layer = 1;
-
-	while(gridmin>1)
-	{
-    	i = 1;
-    	MPI_Layer += 1;
-    	while(i<=YGridN*Ypa)
+        	if(Dx[n-2][i].second  >= ((RankIdx_Y-1)*YGridN+1) && Dx[n-2][i].second <= (RankIdx_Y)*YGridN )
     		{
-    			if(i >= ((RankIdx_Y-1)*YGridN+1) & i<= (RankIdx_Y)*YGridN )
-    			{
-					LayerGridY[MPI_Layer] += 1;
-        		}
-				i += pow(2,(MPI_Layer-1));
-			}
+				LayerGridY[MPI_Layer] += 1;
+        	}
 
-			MPI_Allreduce(&LayerGridY[MPI_Layer], &gridmin, 1, MPI_INT, MPI_MIN,MPI_COMM_WORLD);
+		}
+
+		tmp[0].first=tmp[1].first;
+		tmp.push_back( { tmp[tmp.size()-1].first, p_Meshs->GridsTmp.size()-1} ); //right ghost
+		Dx.push_back(tmp);
+
+		int minGrid=std::min(LayerGridY[MPI_Layer],LayerGridX[MPI_Layer]);
+		MPI_Allreduce(&minGrid, &gridmin, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 	}
-//================= Y Direction ============================//
-//==========================================================//
+
+
+	// //=====
+	// if(Rank==0)
+	
+	// {FILE * dFile;
+	// char name[128];
+ //  	sprintf(name,"AllLayers_%d_.dg",Rank);
+	// dFile = fopen (name,"w");
+
+	// for (n=1; n<=MPI_Layer; n++)
+	// {
+	// 	for (j=0; j<Dx[n-1].size(); j++)
+	// 	{
+		
+	// 		fprintf(dFile, "[%d] ", Dx[n-1][j].second);
+	// 	}
+	// 	fprintf(dFile, "\n");
+	// }
+	// //====
+	// fclose (dFile);
+	// }
 
 
 	int Tot_GridX = 0;
 	int Tot_GridY = 0;
 
-	for (i=1; i<MPI_Layer+1; i++)
-	{
-    	Tot_GridX += LayerGridX[i];
-    	Tot_GridY += LayerGridY[i];
-	}
-	Tot_GridX += MPI_Layer*2;
-	Tot_GridY += MPI_Layer*2;
 
-
-// ---------------------------------------------------------
-	// Find the 2D Cells Sum of all Layers above this Layer
-// ---------------------------------------------------------
 	Layer_Sum[1] =0;
-	for (i=2; i<MPI_Layer+1; i++)
+	for (i=1; i<=MPI_Layer; i++) //layer starts with 1
 	{
-		Layer_Sum[i] =Layer_Sum[i-1]+(LayerGridX[i-1]+2)*(LayerGridY[i-1]+2);
-	}
-
-// ---------------------------------------------------------
-	// Find the 1D Cell Sum of all Layers above this Layer
-// ---------------------------------------------------------
-	int LayerSum1dX[MPI_Layer+1];
-	int LayerSum1dY[MPI_Layer+1];
-
-	LayerSum1dX[1] =0;
-	LayerSum1dY[1] =0;
-
-	for (i=2; i<=MPI_Layer; i++)
-	{
-		LayerSum1dX[i] =LayerSum1dX[i-1]+(LayerGridX[i-1]+2);
-		LayerSum1dY[i] =LayerSum1dY[i-1]+(LayerGridY[i-1]+2);
+    	Tot_GridX += LayerGridX[i]+2;
+    	Tot_GridY += LayerGridX[i]+2;
+    	
+    	if(i>1)
+    	{
+    		// Find the 2D Cells Sum of all Layers above this Layer
+    		Layer_Sum[i]   = Layer_Sum[i-1]+(LayerGridX[i-1]+2)*(LayerGridY[i-1]+2);
+    	}
 	}
 
 
 // ----------------------------------------------------------------
 	// Find the Cell Grand_Index in X(or Y) direction at each layer
 // ----------------------------------------------------------------
-	int Cellidx_i[Tot_GridX];
-	int Cellidx_j[Tot_GridY];
+	
+	std::vector< std::vector<int> >    Cellidx_i(MPI_Layer,std::vector<int>() );
+	std::vector< std::vector<int> >    Cellidx_j(MPI_Layer,std::vector<int>() );
 
-	int Celln = XGridN+2;
+	std::vector< std::vector<WDOUBLE> > Celldx(MPI_Layer,std::vector<WDOUBLE>() );
+	std::vector< std::vector<WDOUBLE> > Celldy(MPI_Layer,std::vector<WDOUBLE>() );
 
-	for (i=0; i<Celln; i++) 
+
+	for (n=1; n<=MPI_Layer; n++)
 	{
-		Cellidx_i[i] = i+((RankIdx_X-1)*XGridN);
-		Cellidx_j[i] = i+((RankIdx_Y-1)*YGridN);
-	}
-
-
-	for(n=2;n<=MPI_Layer;n++)
-	{
-		i = 1;
-		while(i<=XGridN*Xpa)
+    	int iflag=0;
+    	int jflag=0;
+		for(i=0;i<Dx[n-1].size();i++)
 		{
-			if(i >= ((RankIdx_X-1)*XGridN+1) & i<= (RankIdx_X)*XGridN )
+			WDOUBLE ddx = Dx[n-1][i].first;
+			int    idx = Dx[n-1][i].second;
+
+			//x-dir
+			if(idx >= ((RankIdx_X-1)*XGridN+1) && idx<= (RankIdx_X)*XGridN )
+    		{
+				if(iflag==0)
+				{	
+					Celldx[n-1].push_back(Dx[n-1][i-1].first);
+					Cellidx_i[n-1].push_back(Dx[n-1][i-1].second);
+					iflag=1;
+				}
+
+				Celldx[n-1].push_back(ddx);
+				Cellidx_i[n-1].push_back(idx);
+        	}
+        	else if(iflag)
+        	{	iflag=0;
+        		Celldx[n-1].push_back(ddx);
+				Cellidx_i[n-1].push_back(idx);
+        	}
+
+
+    		//y-dir
+        	if(idx >= ((RankIdx_Y-1)*YGridN+1) && idx<= (RankIdx_Y)*YGridN )
+    		{
+				if(jflag==0)
+				{	
+					Celldy[n-1].push_back(Dx[n-1][i-1].first);
+					Cellidx_j[n-1].push_back(Dx[n-1][i-1].second);
+					jflag=1;
+				}
+
+				Celldy[n-1].push_back(ddx);
+				Cellidx_j[n-1].push_back(idx);
+				
+				
+        	}
+        	else if(jflag)
 			{
-				Celln += 1;
-				Cellidx_i[Celln] = i;
+				jflag=0;
+				Celldy[n-1].push_back(ddx);
+				Cellidx_j[n-1].push_back(idx);
 			}
-		i += pow(2,(n-1));
+
+
 		}
 
-		Cellidx_i[Celln+1] = Cellidx_i[Celln]+pow(2,(n-1));
-		Cellidx_i[Celln-LayerGridX[n]] = Cellidx_i[Celln-LayerGridX[n]+1]-pow(2,(n-1));
-		Celln += 2;
 
 	}
-
-	Celln = YGridN+2;
-
-	for(n=2;n<=MPI_Layer;n++)
-	{
-		i = 1;
-		while(i<=YGridN*Ypa)
-		{
-			if(i >= ((RankIdx_Y-1)*YGridN+1) & i<= (RankIdx_Y)*YGridN )
-			{
-				Celln += 1;
-				Cellidx_j[Celln] = i;
-			}
-		i += pow(2,(n-1));
-		}
-
-
-		Cellidx_j[Celln+1] = Cellidx_j[Celln]+pow(2,(n-1));
-		Cellidx_j[Celln-LayerGridY[n]] = Cellidx_j[Celln-LayerGridY[n]+1]-pow(2,(n-1));
-		Celln += 2;
-	}
-
 
 
 
@@ -275,18 +288,40 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 			for (i=0; i<=LayerGridX[n]+1; i++)
 			{
 				MG_Cell &mgc = GetMGCell(i,j,n);
-				mgc.Grandidx_X = Cellidx_i[LayerSum1dX[n]+i];
-				mgc.Grandidx_Y = Cellidx_j[LayerSum1dY[n]+j];
+				mgc.Grandidx_X = Cellidx_i[n-1][i];
+				mgc.Grandidx_Y = Cellidx_j[n-1][j];
+
+				mgc.dx = Celldx[n-1][i];
+				mgc.dy = Celldy[n-1][j];
+
 			}
 		}
 	}
+
+	// //=====
+	// FILE * dFile;
+	// char name[128];
+ //  	sprintf(name,"MultiGrids_%d_.dg",Rank);
+	// dFile = fopen (name,"w");
+
+	// for (n=1; n<=MPI_Layer; n++)
+	// {
+	// 	for (j=0; j<=LayerGridY[n]+1; j++)
+	// 	{
+
+	// 		MG_Cell &mgc = GetMGCell(0,j,n);
+	// 		fprintf(dFile, "[%f] ", mgc.dy);
+	// 	}
+	// 	fprintf(dFile, "\n");
+	// }
+	// //====
+	// fclose (dFile);
 
 
 // ----------------------------------------------------------------
 	// Relate Cells at different layers
 	// Find	restriction rules and prolongation rules
 // ----------------------------------------------------------------
-
 	int ii, jj;
 
 	// Restriction starts at the second layer//
@@ -302,12 +337,13 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 				ii = 1;
 				jj = 1;
 
-				while (Cellidx_i[LayerSum1dX[n-1]+ii]<Cellidx_i[LayerSum1dX[n]+i])
+				while (Cellidx_i[n-2][ii]<Cellidx_i[n-1][i])
 				{ ii++; }
-				while (Cellidx_j[LayerSum1dY[n-1]+jj]<Cellidx_j[LayerSum1dY[n]+j])
+				while (Cellidx_j[n-2][jj]<Cellidx_j[n-1][j])
 				{ jj++; }
 
 				mgc.p_Res_cc = &GetMGCell(ii,  jj,n-1);
+
 				mgc.p_Res_xm = &GetMGCell(ii-1,jj,n-1);
 				mgc.p_Res_xp = &GetMGCell(ii+1,jj,n-1);
 				mgc.p_Res_ym = &GetMGCell(ii,jj-1,n-1);
@@ -317,6 +353,7 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 				mgc.p_Res_mp = &GetMGCell(ii-1,jj+1,n-1);
 				mgc.p_Res_pm = &GetMGCell(ii+1,jj-1,n-1);
 				mgc.p_Res_pp = &GetMGCell(ii+1,jj+1,n-1);
+
 			}
 		}
 	}
@@ -340,33 +377,28 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 
 				for (ii = 0; ii<=LayerGridX[n+1]+1; ii++)
 				{
-					if(Cellidx_i[LayerSum1dX[n+1]+ii]==Cellidx_i[LayerSum1dX[n]+i])
+					if(Cellidx_i[n][ii]==Cellidx_i[n-1][i])
 					{
 						findx = 1;
 						break;
 					}
-					
 
-					if(Cellidx_i[LayerSum1dX[n+1]+ii]<Cellidx_i[LayerSum1dX[n]+i]&
-					 Cellidx_i[LayerSum1dX[n+1]+ii+1]>Cellidx_i[LayerSum1dX[n]+i])
+					if(Cellidx_i[n][ii]<Cellidx_i[n-1][i]&&Cellidx_i[n][ii+1]>Cellidx_i[n-1][i])
 					{
 						break;
 					}
-
-
 				} 
 
 
 				for (jj = 0; jj<=LayerGridY[n+1]+1; jj++)
 				{
-					if(Cellidx_j[LayerSum1dY[n+1]+jj]==Cellidx_j[LayerSum1dY[n]+j])
+					if(Cellidx_j[n][jj]==Cellidx_j[n-1][j])
 					{
 						findy = 1;
 						break;
 					}
 
-					if(Cellidx_j[LayerSum1dY[n+1]+jj]<Cellidx_j[LayerSum1dY[n]+j]&
-					 Cellidx_j[LayerSum1dY[n+1]+jj+1]>Cellidx_j[LayerSum1dY[n]+j])
+					if(Cellidx_j[n][jj]<Cellidx_j[n-1][j]&&Cellidx_j[n][jj+1]>Cellidx_j[n-1][j])
 					{
 						break;
 					}
@@ -374,7 +406,7 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 				}
 
 				//type 0 prolongation
-				if(findx==1 &findy == 1)
+				if(findx==1 &&findy == 1)
 				{
 					mgc.Protype = 0;
 					mgc.p_Pro_xm = &GetMGCell(ii,jj,n+1);
@@ -382,21 +414,21 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 				}
 
 				//type 1 prolongation
-				if(findx==0 &findy == 1)
+				if(findx==0 &&findy == 1)
 				{
 					mgc.Protype = 1;
 					mgc.p_Pro_xm = &GetMGCell(ii,  jj,n+1);
 					mgc.p_Pro_xp = &GetMGCell(ii+1,jj,n+1);
 				}
 				//type 2 prolongation
-				if(findx==1 &findy == 0)
+				if(findx==1 &&findy == 0)
 				{
 					mgc.Protype = 2;
 					mgc.p_Pro_ym = &GetMGCell(ii,  jj,n+1);
 					mgc.p_Pro_yp = &GetMGCell(ii,jj+1,n+1);
 				}
 				//type 3 prolongation
-				if(findx==0 &findy == 0)
+				if(findx==0 &&findy == 0)
 				{
 					mgc.Protype = 3;
 					mgc.p_Pro_xm = &GetMGCell(ii,    jj,n+1);
@@ -405,12 +437,9 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 					mgc.p_Pro_yp = &GetMGCell(ii+1,jj+1,n+1);
 				}
 
-			
 			}
 		}
 	}
-
-
 
 
 
@@ -443,7 +472,7 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 
 
 
-
+/*  removed by Tianhong; May-25
     // MPI_GatherV receive displacement for each sending processor;
     if(Rank == Worker)
 	{	
@@ -561,6 +590,7 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 			}
 
 
+
 // ----------------------------------------------------------------
 	// Relate Cells at different layers
 	// Find	restriction rules and prolongation rules
@@ -630,7 +660,6 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 								break;
 							}
 
-
 						} 
 
 
@@ -694,6 +723,7 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 
 	}
 
+*/
 	//==== end worker rank=====//
 
 	for (i=1; i<=MPI_Layer+SER_Layer; i++)
@@ -711,11 +741,14 @@ MultiGrid::MultiGrid(int rank, int XGridN, int YGridN, FILE *f):NList("MultiGrid
 
 
 // Full Weight Restriction
-// Don't forget take care the corner values at exchange();
-void MultiGrid::Restriction(int send, int rece, int tolayer, int where)
+void MultiGrid::Restriction(int send, int rece, int tolayer, int where) //v
 {
 
 	int i,j;
+	WDOUBLE wmm, wxm, wmp;
+	WDOUBLE wym, wcc, wyp;
+	WDOUBLE wpm, wxp, wpp;
+	WDOUBLE wa;
 
 switch(where)
 {
@@ -727,11 +760,25 @@ switch(where)
 
 			MG_Cell &mgc = GetMGCell(i,j,tolayer);
 
-			mgc.M_value[rece] = 			(mgc.p_Res_cc)->M_value[send]*0.25
-			+((mgc.p_Res_xm)->M_value[send]+(mgc.p_Res_xp)->M_value[send]
-			 +(mgc.p_Res_ym)->M_value[send]+(mgc.p_Res_yp)->M_value[send])*0.125
-			+((mgc.p_Res_mm)->M_value[send]+(mgc.p_Res_mp)->M_value[send]
-			 +(mgc.p_Res_pm)->M_value[send]+(mgc.p_Res_pp)->M_value[send])*0.0625;
+			wmm=mgc.p_Res_mm->dx*mgc.p_Res_mm->dy/4;
+			wxm=mgc.p_Res_xm->dx*mgc.p_Res_xm->dy/2;
+			wmp=mgc.p_Res_mp->dx*mgc.p_Res_mp->dy/4;
+
+			wym=mgc.p_Res_ym->dx*mgc.p_Res_ym->dy/2;
+			wcc=mgc.p_Res_cc->dx*mgc.p_Res_cc->dy;
+			wyp=mgc.p_Res_yp->dx*mgc.p_Res_yp->dy/2;
+
+			wpm=mgc.p_Res_pm->dx*mgc.p_Res_pm->dy/4;
+			wxp=mgc.p_Res_xp->dx*mgc.p_Res_xp->dy/2;
+			wpp=mgc.p_Res_pp->dx*mgc.p_Res_pp->dy/4;
+
+			wa=wmm+wxm+wmp + wym+wcc+wyp + wpm+wxp+wpp;
+
+			mgc.M_value[rece] = (
+				mgc.p_Res_mm->M_value[send]*wmm + mgc.p_Res_xm->M_value[send]*wxm + mgc.p_Res_mp->M_value[send]*wmp
+			  + mgc.p_Res_ym->M_value[send]*wym + mgc.p_Res_cc->M_value[send]*wcc + mgc.p_Res_yp->M_value[send]*wyp	
+			  + mgc.p_Res_pm->M_value[send]*wpm + mgc.p_Res_xp->M_value[send]*wxp + mgc.p_Res_pp->M_value[send]*wpp
+			)/wa;
 
 		}
 
@@ -739,6 +786,7 @@ switch(where)
 	break;
 
 	case 1:
+	/*
 	for(j=1; j<=BLayerGrid[tolayer]; j++)
 	{
 		for(i=1; i<=BLayerGrid[tolayer]; i++)
@@ -755,6 +803,7 @@ switch(where)
 		}
 
 	}
+	*/
 	break;
 
 }
@@ -764,13 +813,12 @@ switch(where)
 
 
 
-void MultiGrid::RestrictionB(int send, int rece, int tolayer, int where)
+void MultiGrid::RestrictionB(int send, int rece, int tolayer, int where)//?
 {
 
 int i,j;
 switch(where)
 {
-
 	case 0:
 	for(j=1; j<=LayerGridY[tolayer]; j++)
 	{
@@ -779,11 +827,9 @@ switch(where)
 
 			MG_Cell &mgc = GetMGCell(i,j,tolayer);
 			mgc.M_value[rece] = (mgc.p_Res_cc)->M_value[send];
-			
 		}
 
 	}
-
 	break;
 
 	case 1:
@@ -791,12 +837,8 @@ switch(where)
 	{
 		for(i=1; i<=BLayerGrid[tolayer]; i++)
 		{
-
 			MG_Cell &mgc = GetMGBCell(i,j,tolayer);
-
 			mgc.M_value[rece] = (mgc.p_Res_cc)->M_value[send];
-
-
 		}
 
 	}
@@ -809,11 +851,11 @@ switch(where)
 }
 
 
-// Four type prolongation
-void MultiGrid::Prolongation(int send, int rece, int tolayer, int where)
+void MultiGrid::Prolongation(int send, int rece, int tolayer, int where) //v
 {
 
 	int i,j;
+	WDOUBLE dxm, dxp, dym, dyp;
 
 switch(where)
 {
@@ -833,20 +875,28 @@ switch(where)
 					break;
 
 				case 1: 
-					mgc.M_value[rece] = ((mgc.p_Pro_xm)->M_value[send]
-										+(mgc.p_Pro_xp)->M_value[send])*0.5;
+					dxm=mgc.p_Pro_xm->dx;
+					dxp=mgc.p_Pro_xp->dx;
+					mgc.M_value[rece] = ((mgc.p_Pro_xm)->M_value[send]*dxp
+										+(mgc.p_Pro_xp)->M_value[send]*dxm)/(dxm+dxp);
 					break;
 					
 				case 2: 
-					mgc.M_value[rece] = ((mgc.p_Pro_ym)->M_value[send]
-										+(mgc.p_Pro_yp)->M_value[send])*0.5;
-
+					dym=mgc.p_Pro_ym->dy;
+					dyp=mgc.p_Pro_yp->dy;
+					mgc.M_value[rece] = ((mgc.p_Pro_ym)->M_value[send]*dyp
+										+(mgc.p_Pro_yp)->M_value[send]*dym)/(dym+dyp);
 					break;
 
 				case 3: 
-					mgc.M_value[rece] =			  ((mgc.p_Pro_xm)->M_value[send]
-					+(mgc.p_Pro_xp)->M_value[send]+(mgc.p_Pro_ym)->M_value[send]
-					+(mgc.p_Pro_yp)->M_value[send])*0.25;
+					dxm=mgc.p_Pro_xm->dx;
+					dxp=mgc.p_Pro_xp->dx;
+					dym=mgc.p_Pro_ym->dy;
+					dyp=mgc.p_Pro_yp->dy;
+
+					mgc.M_value[rece] = ((mgc.p_Pro_xm)->M_value[send]*dxp*dyp
+					+(mgc.p_Pro_xp)->M_value[send]*dxm*dyp+(mgc.p_Pro_ym)->M_value[send]*dxp*dym
+					+(mgc.p_Pro_yp)->M_value[send]*dxm*dym)/(dxm+dxp)/(dym+dyp);
 					break;
 
 			}
@@ -859,6 +909,7 @@ switch(where)
 
 
 	case 1:
+	/*
 	for(j=1; j<=BLayerGrid[tolayer]; j++)
 	{
 		for(i=1; i<=BLayerGrid[tolayer]; i++)
@@ -894,6 +945,7 @@ switch(where)
 		}
 
 	}
+	*/
 
 
 	break;
@@ -908,79 +960,10 @@ switch(where)
 
 
 
+//deprecated//May-25-tianhong
 void MultiGrid::SendtoBottom(int what)
 {
-	int i, j, n;
-
-	int nsend;
-	nsend = LayerGridX[MPI_Layer]*LayerGridY[MPI_Layer];
-	double mysend[nsend];
-	double myreceive[BottomCells];
-
-	n = 0;
-	for(j=1; j<=LayerGridY[MPI_Layer]; j++)
-	{
-		for(i=1; i<=LayerGridX[MPI_Layer]; i++)
-		{
-
-			MG_Cell &mgc = GetMGCell(i,j,MPI_Layer);
-			mysend[n] = mgc.M_value[what];
-			n++;
-
-		}
-	}
-
-	MPI_Gatherv(&mysend, nsend, MPI_DOUBLE, &myreceive, BottomSend, Bottomdisp,
-				MPI_DOUBLE, Worker, MPI_COMM_WORLD);
-
-	//put cells into Worker processor;
-	int ii = 0;
-	int jj = 0;
-
-	int offx[Xpa];
-	int offy[Ypa];
-
-	offx[0] = 0;
-	offy[0] = 0;
-
-	for(n=0; n<Xpa*Ypa; n++)
-	{
-	   if(n%Xpa+1<Xpa)		{offx[n%Xpa+1] 		= recebottomX[n];};
-	   if(int(n/Ypa)+1<Ypa) {offy[int(n/Ypa)+1] = recebottomY[n];};
-	}
-
-
-	for(n = 1; n<Xpa; n++)
-	{
-		offx[n] += offx[n-1];
-		offy[n] += offy[n-1];
-	}
-
-
-	if(Rank == Worker)
-	{
-
-		for (n=0; n<Xpa*Ypa; n++)
-		{
-
-			for(j=1; j<=recebottomY[n]; j++)
-			{
-
-				for(i=1; i<=recebottomX[n]; i++)
-				{
-
-					ii = offx[ n%Xpa ]+i;
-					jj = offy[ int(n/Xpa) ]+j;
-
-					MG_Cell &mgc = GetMGBCell(ii,jj,1);
-					mgc.M_value[what] = myreceive[ Bottomdisp[n]+(j-1)*recebottomX[n]+(i-1)];
-				}
-
-			}
-
-		}
-
-	}
+	
 
 
 	return;
@@ -988,86 +971,10 @@ void MultiGrid::SendtoBottom(int what)
 }
 
 
-
+//deprecated//May-25-tianhong
 void MultiGrid::BottomSendBack(int what)
 {
-	int i, j, n;
-
-	int nrece;
-	nrece = LayerGridX[MPI_Layer]*LayerGridY[MPI_Layer];
-
-	double myrece[nrece];
-	double mysend[BottomCells];
-
-
-	//put cells into Worker processor;
-	int ii = 0;
-	int jj = 0;
-
-
-
-	int offx[Xpa];
-	int offy[Xpa];
-
-	offx[0] = 0;
-	offy[0] = 0;
-
-	for(n=0; n<Xpa*Ypa; n++)
-	{
-	   if(n%Xpa+1<Xpa)		{offx[n%Xpa+1] 		= recebottomX[n];};
-	   if(int(n/Ypa)+1<Ypa) {offy[int(n/Ypa)+1] = recebottomY[n];};
-	}
-
-
-	for(n = 1; n<Xpa; n++)
-	{
-		offx[n] += offx[n-1];
-		offy[n] += offy[n-1];
-	}
-
-	if(Rank == Worker)
-	{
-
-		for (n=0; n<Xpa*Ypa; n++)
-		{
-
-			for(j=1; j<=recebottomY[n]; j++)
-			{
-
-				for(i=1; i<=recebottomX[n]; i++)
-				{
-
-					ii = offx[ n%Xpa ]+i;
-					jj = offy[ int(n/Xpa) ]+j;
-
-					MG_Cell &mgc = GetMGBCell(ii,jj,1);
-					mysend[ Bottomdisp[n]+(j-1)*recebottomX[n]+(i-1)] = mgc.M_value[what];
-				
-				}
-
-			}
-
-		}
-
-	}
-
-	MPI_Scatterv(&mysend, BottomSend, Bottomdisp, MPI_DOUBLE, &myrece, nrece,
-				MPI_DOUBLE, Worker, MPI_COMM_WORLD);
-
-
-	n = 0;
-	for(j=1; j<=LayerGridY[MPI_Layer]; j++)
-	{
-		for(i=1; i<=LayerGridX[MPI_Layer]; i++)
-		{
-
-			MG_Cell &mgc = GetMGCell(i,j,MPI_Layer);
-			mgc.M_value[what] = myrece[n];
-			n++;
-
-		}
-	}
-
+	
 
 
 	return;
@@ -1076,7 +983,7 @@ void MultiGrid::BottomSendBack(int what)
 
 
 
-
+//deprecated//May-25-tianhong
 void MultiGrid::MG_BottomLayer(int field)
 {
 
@@ -1165,12 +1072,18 @@ void MultiGrid::MG_BottomLayer(int field)
 }
 
 
-void MultiGrid::Relaxation(int field, int layer, int where)
+void MultiGrid::Relaxation(int field, int layer, int where) //v 
 {
 
 	int i,j;
 	int nx,ny, amp;
 
+	WDOUBLE hxp,hxm,hxa,hxd,h2x;
+	WDOUBLE hyp,hym,hya,hyd,h2y;
+
+	WDOUBLE wcc,wxm,wxp,wym,wyp,wmm,wmp,wpm,wpp;
+	WDOUBLE d2xS, d2yS, dxS, dyS;
+	WDOUBLE kcc,kxm,kxp,kym,kyp;
 
 	switch(RelaxType)
 	{
@@ -1178,33 +1091,71 @@ void MultiGrid::Relaxation(int field, int layer, int where)
 	// case 0: Hybird Gauss-Siedel Relaxation
 	// case 1: Red-Black Relaxation
 	// case 2: 
-		case 0:
-		default:
-		nx=LayerGridX[layer];
-		ny=LayerGridY[layer];
-		amp=MeshAmplif[layer];
+	case 0:
+	default:
+	nx=LayerGridX[layer];
+	ny=LayerGridY[layer];
+		// amp=MeshAmplif[layer];
 
 			//Exchange boundary conditions;
-			
 			// case 0: Hybird Gauss-Shield Relaxatio
-
-			for (j=1; j<=ny; j++)
-			{
-				for (i=1; i<=nx; i++)
-				{
-					MG_Cell &ccc = GetMGCell(i,   j, layer);
-					MG_Cell &cxm = GetMGCell(i-1, j, layer);
-					MG_Cell &cxp = GetMGCell(i+1, j, layer);
-					MG_Cell &cym = GetMGCell(i, j-1, layer);
-					MG_Cell &cyp = GetMGCell(i, j+1, layer);
-
-					ccc.M_value[0]=(1-omega)*ccc.M_value[0]+omega*(cxm.M_value[0]+cxp.M_value[0]
-					+cym.M_value[0]+cyp.M_value[0]-ccc.M_value[1]*amp)/(4.0+ccc.M_value[4]*amp);
-				}
-
-			}
+	for (j=1; j<=ny; j++)
+	{
+		for (i=1; i<=nx; i++)
+		{
 			
+			MG_Cell &ccc = GetMGCell(i,   j, layer);
 
+			MG_Cell &cxm = GetMGCell(i-1, j, layer);
+			MG_Cell &cxp = GetMGCell(i+1, j, layer);
+			MG_Cell &cym = GetMGCell(i, j-1, layer);
+			MG_Cell &cyp = GetMGCell(i, j+1, layer);
+
+			MG_Cell &cmm = GetMGCell(i-1, j-1, layer);
+			MG_Cell &cmp = GetMGCell(i-1, j+1, layer);
+			MG_Cell &cpm = GetMGCell(i+1, j-1, layer);
+			MG_Cell &cpp = GetMGCell(i+1, j+1, layer);
+
+			hxp=(cxp.dx+ccc.dx)*0.5;
+			hxm=(ccc.dx+cxm.dx)*0.5;
+			hxa=hxp+hxm; hxd=hxp-hxm;
+			h2x=hxa*hxa-hxp*hxm*3;
+
+			hyp=(cyp.dy+ccc.dy)*0.5;
+			hym=(ccc.dy+cym.dy)*0.5;
+			hya=hyp+hym; hyd=hyp-hym;
+			h2y=hya*hya-hyp*hym*3;
+
+			kcc=ccc.M_value[4];
+			kxm=cxm.M_value[4];
+			kxp=cxp.M_value[4];
+			kym=cym.M_value[4];
+			kyp=cyp.M_value[4];
+
+			wmm = (h2x + h2y - 2*hxd*hxp - 2*hyd*hyp)/(3*hxa*hxm*hya*hym);
+			wmp = (h2x + h2y - 2*hxd*hxp + 2*hyd*hym)/(3*hxa*hxm*hya*hyp);
+			wpm = (h2x + h2y + 2*hxd*hxm - 2*hyd*hyp)/(3*hxa*hxp*hya*hym);
+			wpp = (h2x + h2y + 2*hxd*hxm + 2*hyd*hym)/(3*hxa*hxp*hya*hyp);
+
+			wxm = -( 2*h2y-4*(hyd*hyd+3*hym*hyp) + (h2x-2*hxd*hxp)*(2+hym*hyp*kxm) )/(6*hxa*hxm*hym*hyp);
+			wxp = -( 2*h2y-4*(hyd*hyd+3*hym*hyp) + (h2x+2*hxd*hxm)*(2+hym*hyp*kxp) )/(6*hxa*hxp*hym*hyp);
+			wym = -( 2*h2x-4*(hxd*hxd+3*hxm*hxp) + (h2y-2*hyd*hyp)*(2+hxm*hxp*kym) )/(6*hxm*hxp*hya*hym);
+			wyp = -( 2*h2x-4*(hxd*hxd+3*hxm*hxp) + (h2y+2*hyd*hym)*(2+hxm*hxp*kyp) )/(6*hxm*hxp*hya*hyp);
+
+			wcc = ( h2y*(-2+hxm*hxp*kcc) + h2x*(-2+hym*hyp*kcc) - 2*(hym*hyp*(4+hxd*hxd*kcc) + hxm*hxp*(4+hyd*hyd*kcc)) )/(6*hxm*hxp*hym*hyp);
+
+			dxS = (cxp.M_value[1]-ccc.M_value[1])*hxm/hxp/hxa + (ccc.M_value[1]-cxm.M_value[1])*hxp/hxm/hxa;
+			dyS = (cyp.M_value[1]-ccc.M_value[1])*hym/hyp/hya + (ccc.M_value[1]-cym.M_value[1])*hyp/hym/hya;
+
+			d2xS = (hxm*cxp.M_value[1]-hxa*ccc.M_value[1]+hxp*cxm.M_value[1])*2/hxa/hxp/hxm;
+			d2yS = (hym*cyp.M_value[1]-hya*ccc.M_value[1]+hyp*cym.M_value[1])*2/hya/hyp/hym;
+
+			ccc.M_value[0]=(1-omega)*ccc.M_value[0]+omega*
+			( ccc.M_value[1] + h2x/12*d2xS + h2y/12*d2yS + hxd/3*dxS + hyd/3*dyS
+			 - wxm*cxm.M_value[0]- wxp*cxp.M_value[0]- wym*cym.M_value[0]- wyp*cyp.M_value[0]
+			 - wmm*cmm.M_value[0]- wpm*cpm.M_value[0]- wmp*cmp.M_value[0]- wpp*cpp.M_value[0])/(wcc-kcc) ;
+		}
+	}
 		// //Bottom layer
 		// 	for (j=1; j<=BLayerGrid[layer]; j++)
 		// 	{
@@ -1235,12 +1186,19 @@ void MultiGrid::Relaxation(int field, int layer, int where)
 
 
 
-void MultiGrid::Residual(int field, int layer, int where)
+void MultiGrid::Residual(int field, int layer, int where) //v
 {
 
 	int i,j;
 	int nx,ny, amp;
 
+
+	WDOUBLE hxp,hxm,hxa,hxd,h2x;
+	WDOUBLE hyp,hym,hya,hyd,h2y;
+
+	WDOUBLE wcc,wxm,wxp,wym,wyp,wmm,wmp,wpm,wpp;
+	WDOUBLE d2xS, d2yS, dxS, dyS;
+	WDOUBLE kcc,kxm,kxp,kym,kyp;
 
 // switch(where)
 // {
@@ -1248,26 +1206,68 @@ void MultiGrid::Residual(int field, int layer, int where)
 // 	case 0:
 	nx=LayerGridX[layer];
 	ny=LayerGridY[layer];
-	amp=MeshAmplif[layer];
+	// amp=MeshAmplif[layer];
 
 	for (j=1; j<=ny; j++)
 	{
 		for (i=1; i<=nx; i++)
 		{	
+
 			MG_Cell &ccc = GetMGCell(i,   j, layer);
+
 			MG_Cell &cxm = GetMGCell(i-1, j, layer);
 			MG_Cell &cxp = GetMGCell(i+1, j, layer);
 			MG_Cell &cym = GetMGCell(i, j-1, layer);
 			MG_Cell &cyp = GetMGCell(i, j+1, layer);
 
-			ccc.M_value[2]=ccc.M_value[1]-(cxm.field+cxp.field
-			+cym.field+cyp.field-(4+ccc.M_value[4]*amp)*ccc.field)/amp;
+			MG_Cell &cmm = GetMGCell(i-1, j-1, layer);
+			MG_Cell &cmp = GetMGCell(i-1, j+1, layer);
+			MG_Cell &cpm = GetMGCell(i+1, j-1, layer);
+			MG_Cell &cpp = GetMGCell(i+1, j+1, layer);
+
+			hxp=(cxp.dx+ccc.dx)*0.5;
+			hxm=(ccc.dx+cxm.dx)*0.5;
+			hxa=hxp+hxm; hxd=hxp-hxm;
+			h2x=hxa*hxa-hxp*hxm*3;
+
+			hyp=(cyp.dy+ccc.dy)*0.5;
+			hym=(ccc.dy+cym.dy)*0.5;
+			hya=hyp+hym; hyd=hyp-hym;
+			h2y=hya*hya-hyp*hym*3;
+
+			kcc=ccc.M_value[4];
+			kxm=cxm.M_value[4];
+			kxp=cxp.M_value[4];
+			kym=cym.M_value[4];
+			kyp=cyp.M_value[4];
+
+			wmm = (h2x + h2y - 2*hxd*hxp - 2*hyd*hyp)/(3*hxa*hxm*hya*hym);
+			wmp = (h2x + h2y - 2*hxd*hxp + 2*hyd*hym)/(3*hxa*hxm*hya*hyp);
+			wpm = (h2x + h2y + 2*hxd*hxm - 2*hyd*hyp)/(3*hxa*hxp*hya*hym);
+			wpp = (h2x + h2y + 2*hxd*hxm + 2*hyd*hym)/(3*hxa*hxp*hya*hyp);
+
+			wxm = -( 2*h2y-4*(hyd*hyd+3*hym*hyp) + (h2x-2*hxd*hxp)*(2+hym*hyp*kxm) )/(6*hxa*hxm*hym*hyp);
+			wxp = -( 2*h2y-4*(hyd*hyd+3*hym*hyp) + (h2x+2*hxd*hxm)*(2+hym*hyp*kxp) )/(6*hxa*hxp*hym*hyp);
+			wym = -( 2*h2x-4*(hxd*hxd+3*hxm*hxp) + (h2y-2*hyd*hyp)*(2+hxm*hxp*kym) )/(6*hxm*hxp*hya*hym);
+			wyp = -( 2*h2x-4*(hxd*hxd+3*hxm*hxp) + (h2y+2*hyd*hym)*(2+hxm*hxp*kyp) )/(6*hxm*hxp*hya*hyp);
+
+			wcc = ( h2y*(-2+hxm*hxp*kcc) + h2x*(-2+hym*hyp*kcc) - 2*(hym*hyp*(4+hxd*hxd*kcc) + hxm*hxp*(4+hyd*hyd*kcc)) )/(6*hxm*hxp*hym*hyp);
+
+			dxS = (cxp.M_value[1]-ccc.M_value[1])*hxm/hxp/hxa + (ccc.M_value[1]-cxm.M_value[1])*hxp/hxm/hxa;
+			dyS = (cyp.M_value[1]-ccc.M_value[1])*hym/hyp/hya + (ccc.M_value[1]-cym.M_value[1])*hyp/hym/hya;
+
+			d2xS = (hxm*cxp.M_value[1]-hxa*ccc.M_value[1]+hxp*cxm.M_value[1])*2/hxa/hxp/hxm;
+			d2yS = (hym*cyp.M_value[1]-hya*ccc.M_value[1]+hyp*cym.M_value[1])*2/hya/hyp/hym;
+
+			ccc.M_value[2]=ccc.M_value[1]-
+			(  wxm*cxm.M_value[0]+ wxp*cxp.M_value[0]+ wym*cym.M_value[0]+ wyp*cyp.M_value[0]
+			 + wmm*cmm.M_value[0]+ wpm*cpm.M_value[0]+ wmp*cmp.M_value[0]+ wpp*cpp.M_value[0]
+			 + (wcc-kcc)*ccc.M_value[0] -h2x/12*d2xS -h2y/12*d2yS - hxd/3*dxS - hyd/3*dyS
+			);
 		}
 
 	}
 	// break;
-
-
 // 	case 1:
 
 // 	for (j=1; j<=BLayerGrid[layer]; j++)
@@ -1302,105 +1302,51 @@ void MultiGrid::SetZero(int what, int layer, int where)
 	int nx,ny;
 
 
-// switch(where)
-// {
-
-// 	case 0:
 
 	nx=LayerGridX[layer];
 	ny=LayerGridY[layer];
 
-	// switch(where)
-	// {
 
-	// case 0:
 	for (j=0; j<=ny+1; j++)
 	{
 		for (i=0; i<=nx+1; i++)
 		{
 
 			MG_Cell &ccc = GetMGCell(i, j, layer);
-			ccc.M_value[what] = 0;
+			ccc.M_value[what] = 0.0;
 
 		}
 
 	}	
 
-// 	break;
-
-// 	case 1:
-
-// 	for (j=0; j<=BLayerGrid[layer]+1; j++)
-// 	{
-// 		for (i=0; i<=BLayerGrid[layer]+1; i++)
-// 		{
-
-// 			MG_Cell &ccc = GetMGBCell(i, j, layer);
-// 			ccc.M_value[what] = 0;
-
-// 		}
-
-// 	}
-
-// 	break;
-
-// }
-
-
 
 
 	return;
 }
-
-
 
 void MultiGrid::Exchange(int what, int layer)
 {
 
 	switch(what)
 	{
-		case 0:
+		case MG_Phi:
 			p_domain()->p_Com()->DoCommute(COMMU_MG_P, layer);
 			break;
-		case 1:
+		case MG_Sou:
 			p_domain()->p_Com()->DoCommute(COMMU_MG_S, layer);
 			break;
-		case 2:
+		case MG_Res:
 			p_domain()->p_Com()->DoCommute(COMMU_MG_R, layer);
+		case MG_Chi:
+			p_domain()->p_Com()->DoCommute(COMMU_MG_C, layer);
 			break;
-
 	}
-
-
-	//adjust corner cell;
-	if(what == 2)
-	{
-
-		MG_Cell &cmm = GetMGCell(0, 0, layer);
-		cmm.M_value[what] = (GetMGCell(0, 1, layer).M_value[what] 
-							+GetMGCell(1, 0, layer).M_value[what])*0.5;
-
-		MG_Cell &cpm = GetMGCell(LayerGridX[layer]+1, 0, layer);
-		cpm.M_value[what] = (GetMGCell(LayerGridX[layer]+1, 1, layer).M_value[what] 
-							+GetMGCell(LayerGridX[layer],   0, layer).M_value[what])*0.5;
-
-		MG_Cell &cmp = GetMGCell(0, LayerGridY[layer]+1, layer);
-		cmp.M_value[what] = (GetMGCell(0, LayerGridY[layer],   layer).M_value[what] 
-							+GetMGCell(1, LayerGridY[layer]+1, layer).M_value[what])*0.5;
-
-		MG_Cell &cpp = GetMGCell(LayerGridX[layer]+1, LayerGridY[layer]+1, layer);
-		cpp.M_value[what] = (GetMGCell(LayerGridX[layer],   LayerGridY[layer]+1, layer).M_value[what] 
-							+GetMGCell(LayerGridX[layer]+1, LayerGridY[layer],   layer).M_value[what])*0.5;
-	}
-
-	
-
 	return;
 }
 
 
 
-void MultiGrid::AddCorrection(int layer, int where)
+void MultiGrid::AddCorrection(int layer, int where)//v
 {	
 
 	int i,j;
@@ -1424,33 +1370,13 @@ void MultiGrid::AddCorrection(int layer, int where)
 		}
 
 	}
-
-	// break;
-
-	// case 1:
-
-	// for (j=1; j<=BLayerGrid[layer]; j++)
-	// {
-	// 	for (i=1; i<=BLayerGrid[layer]; i++)
-	// 	{
-	// 		MG_Cell &ccc = GetMGBCell(i, j, layer);
-	// 		ccc.M_value[0] +=ccc.M_value[2];
-		
-	// 	}
-
-	// }
-
-	// break;
-
-	// }
-
-
+	
 
 	return;
 }
 
 
-double MultiGrid::FindError(double &maxall)
+WDOUBLE MultiGrid::FindError(WDOUBLE &maxall) //v
 {
 
 	int i,j;
@@ -1461,19 +1387,17 @@ double MultiGrid::FindError(double &maxall)
 // {
 
 // 	case 0:
-
 	nx=LayerGridX[1];
 	ny=LayerGridY[1];
 
-	double epsn;
-	double epsp;
-	double eps;
+	WDOUBLE epsn;
+	WDOUBLE epsp;
+	WDOUBLE eps;
 
-	double maxp;
+	WDOUBLE maxp;
 
 	epsp = 0.0;
 	maxp=0;
-
 
 	for (j=1; j<=ny; j++)
 	{
@@ -1482,24 +1406,26 @@ double MultiGrid::FindError(double &maxall)
 			MG_Cell &ccc = GetMGCell(i, j, 1);
 			epsn = (ccc.M_value[0] -ccc.M_value[3]);
 			epsp += epsn*epsn;
-
-			if(abs(ccc.M_value[0])>maxp) maxp=abs(ccc.M_value[0]);
+			maxp=std::max(maxp,abs(ccc.M_value[0]));
 		
 		}
 
 	}
 
-	MPI_Allreduce(&epsp, &eps,    1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce(&maxp, &maxall, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	MPI_Allreduce(&epsp, &eps,    1, MPI_WDOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(&maxp, &maxall, 1, MPI_WDOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
 	return eps;
 }
 
-void MultiGrid::Put_Source(int field, double k0, int k)
+void MultiGrid::Put_Source(int field, WDOUBLE k0, int k) //v
 {
 
 	int i,j;
 	int nx,ny;
+
+	// int time =p_domain()->Get_Step();
+
 
 	nx=LayerGridX[1];
 	ny=LayerGridY[1];
@@ -1517,6 +1443,7 @@ void MultiGrid::Put_Source(int field, double k0, int k)
 				Cell &cm  = p_Meshs->GetCell(i, j, k-1);
 				Cell &cmm = p_Meshs->GetCell(i, j, k-2);
 				mgc.M_value[0] = 2*cm.W_Fields[field]-cmm.W_Fields[field];	//initial guess
+				// else mgc.M_value[0] = c.W_Fields[field];
 			}
 			else
 			{
@@ -1536,28 +1463,28 @@ void MultiGrid::Put_Source(int field, double k0, int k)
 			{
 				//===Psi==================================
 				case 0:
-				mgc.M_value[1] = (c.W_Denn-c.W_Deni + c.B_Den - c.B_Jz)*dxdy;
+				mgc.M_value[1] = (c.W_Denn-c.W_Deni + c.B_Den - c.B_Jz);
 				mgc.M_value[4] = 0.0;
 				break;
 				//===Ez==================================
 				case 1:
-				mgc.M_value[1] = -p_Meshs->Dive_J(i, j, k0, k)*dxdy;
+				mgc.M_value[1] = -p_Meshs->Dive_J(i, j, k0, k);
 				mgc.M_value[4] = 0.0;
 				break;
 				//===Bz==================================
 				case 2:
-				mgc.M_value[1] =  p_Meshs->Curl_J(i, j, k0, k)*dxdy;
+				mgc.M_value[1] =  p_Meshs->Curl_J(i, j, k0, k);
 				mgc.M_value[4] = 0.0;
 				break;
 				//===Bx==================================
 				case 3:
-				mgc.M_value[1] =  p_Meshs->SourceY(i, j, k0, k)*dxdy;
-				mgc.M_value[4] =  c.W_Chi*dxdy;
+				mgc.M_value[1] =  p_Meshs->SourceY(i, j, k0, k);
+				mgc.M_value[4] =  c.W_Chi;
 				break;
 				//===By==================================
 				case 4:
-				mgc.M_value[1] = -p_Meshs->SourceX(i, j, k0, k)*dxdy;
-				mgc.M_value[4] =  c.W_Chi*dxdy;
+				mgc.M_value[1] = -p_Meshs->SourceX(i, j, k0, k);
+				mgc.M_value[4] =  c.W_Chi;
 				break;
 
 			}
@@ -1570,7 +1497,7 @@ void MultiGrid::Put_Source(int field, double k0, int k)
 
 
 
-void MultiGrid::Put_Fields(int field, int k)
+void MultiGrid::Put_Fields(int field, int k)//v
 {
 
 	int i,j;
@@ -1596,18 +1523,21 @@ void MultiGrid::Put_Fields(int field, int k)
 
 
 
-int MultiGrid::MG_V_cycle(int field, double k0, int k)
+int MultiGrid::MG_V_cycle(int field, WDOUBLE k0, int k)
 {
 
 
 	int i,j,n;
-	double eps;
-	double maxall=1.0;
+	WDOUBLE eps;
+	WDOUBLE maxall=1.0;
 
 //============================================================
 //==============   Put Source For Different Equation =========
 //============================================================
 	Put_Source(field, k0, k);
+	Exchange(MG_Sou, 1);
+	if(field>2) Exchange(MG_Chi,1);
+
 
 
 //============================================================
@@ -1617,20 +1547,20 @@ int MultiGrid::MG_V_cycle(int field, double k0, int k)
 
 	for (n=1; n<MPI_Layer; n++)
 	{
-		RestrictionB(MG_Chi,MG_Chi,n+1, 0);
+		RestrictionB(MG_Chi,MG_Chi,n+1, 0); 
+		Exchange(MG_Chi, n+1);
 	}
-
-	switch(BottomType)
-	{
-		case 1:
-		SendtoBottom(MG_Chi);
-		for (n=1; n<SER_Layer; n++)
-		{
-			RestrictionB(MG_Chi,MG_Chi,n+1,1);
-		}
-		break;
-	}
-
+	
+	// switch(BottomType)
+	// {
+	// 	case 1:
+	// 	// SendtoBottom(MG_Chi);
+	// 	// for (n=1; n<SER_Layer; n++)
+	// 	// {
+	// 	// 	RestrictionB(MG_Chi,MG_Chi,n+1,1);
+	// 	// }
+	// 	break;
+	// }
 
 //============================================================
 //==============     V-Cycle Start          ==================
@@ -1645,16 +1575,11 @@ while(eps > EpsLim*maxall)
 	//if(Rank==0) std::cout<<k<<'\n';
 
 	iter++;
+
 	//record old value
-	for (j=1; j<=LayerGridY[1]; j++)
-	{
-		for (i=1; i<=LayerGridX[1]; i++)
-		{
+	for (j=1; j<=LayerGridY[1]; j++) 
+		for (i=1; i<=LayerGridX[1]; i++) 
 			GetMGCell(i, j, 1).M_value[3] = GetMGCell(i, j, 1).M_value[0];
-
-		}
-
-	}
 
 
 
@@ -1677,7 +1602,8 @@ while(eps > EpsLim*maxall)
 		Exchange(MG_Res, n);
 		
 		Restriction(MG_Res,MG_Sou,n+1, 0);
-		
+		Exchange(MG_Sou, n+1);
+
 		SetZero(MG_Phi, n+1, 0);
 
 
@@ -1703,13 +1629,13 @@ while(eps > EpsLim*maxall)
 		break;
 
 		case 1:
-
-			SendtoBottom(MG_Sou);
-			if(Rank == Worker) 
-			{
-				MG_BottomLayer(field);
-			}
-			BottomSendBack(MG_Phi);
+			//deprecated//May-25-tianhong
+			// SendtoBottom(MG_Sou);
+			// if(Rank == Worker) 
+			// {
+			// 	MG_BottomLayer(field);
+			// }
+			// BottomSendBack(MG_Phi);
 
 		break;
 
@@ -1741,9 +1667,6 @@ while(eps > EpsLim*maxall)
 //============================================================
 	eps = FindError(maxall)/GridXY;
 
-	//======== test==========
-	//if(Rank == 0) std::cout<<"iter: "<<iter<<";   eps:"<<eps<<'\n';
-	//======== test==========
 
 //============================================================
 //==============     Fail to Converge.      ==================
@@ -1753,18 +1676,13 @@ while(eps > EpsLim*maxall)
 		if (Rank==0)  std::cout <<"==== Multigrid: Equation Type: "<<field<< " Failed To Converge at k(z) ="<<k<<'\n';
 		return 1;
 	}
-
 }
-
 
 //============================================================
 //==============   Put Solution Back to Cell         =========
 //============================================================
 	Put_Fields(field, k);
-
 	return 0;
-
-
 
 }
 

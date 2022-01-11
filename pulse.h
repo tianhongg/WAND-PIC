@@ -34,28 +34,28 @@ private:
 
   Domain *p_domain() {return Domain::p_Domain;}; 
 
-  //std::complex<double> Acom(1.0, 0.0);  
+  //std::complex<WDOUBLE> Acom(1.0, 0.0);  
   //complex type of normalized vector potential
 
-  double a0;
+  WDOUBLE a0;
 
-  double XSpotSize;
-  double YSpotSize;
-  double ZLength;
+  WDOUBLE XSpotSize;
+  WDOUBLE YSpotSize;
+  WDOUBLE ZLength;
 
-  double Xcenter;
-  double Ycenter;
-  double Zcenter;
+  WDOUBLE Xcenter;
+  WDOUBLE Ycenter;
+  WDOUBLE Zcenter;
 
-  double ZFocal;
+  WDOUBLE ZFocal;
 
-  double ZRise;
-  double ZDrop;
+  WDOUBLE ZRise;
+  WDOUBLE ZDrop;
 
-  double Xphase;
-  double Yphase;
+  WDOUBLE Xphase;
+  WDOUBLE Yphase;
 
-  double Chirp;
+  WDOUBLE Chirp;
 
   
 
@@ -74,14 +74,14 @@ private:
 
 public:
 
-  double Xpol;
-  double Ypol;
-  double Omega;
+  WDOUBLE Xpol;
+  WDOUBLE Ypol;
+  WDOUBLE Omega;
 
 
-  void Put_AComplex(double x, double y, double z, Cell &c, int NF);
-  double    ProfileLongi(double x, double y, double z);
-  double    ProfileTrans(double x, double y, double z);
+  void Put_AComplex(WDOUBLE x, WDOUBLE y, WDOUBLE z, Cell &c, int NF);
+  WDOUBLE    ProfileLongi(WDOUBLE x, WDOUBLE y, WDOUBLE z);
+  WDOUBLE    ProfileTrans(WDOUBLE x, WDOUBLE y, WDOUBLE z);
 
 
 

@@ -22,10 +22,10 @@
 #include "wand_PIC.h"
 
 
-int Domain::RK2(double &k0, int &k)
+int Domain::RK2(WDOUBLE &k0, int &k)
 {
    int ierr=0;
-   double dz2dz;
+   WDOUBLE dz2dz;
    int NF;
 
 
@@ -61,11 +61,11 @@ int Domain::RK2(double &k0, int &k)
 }
 
 
-int Domain::RK1(double &k0, int &k)
+int Domain::RK1(WDOUBLE &k0, int &k)
 {
    int ierr=0;
    int NF;
-   double dz2dz;
+   WDOUBLE dz2dz;
 
 
    p_Meshes ->AdjustZstep(k0, k, dz2dz);
@@ -101,14 +101,14 @@ int Domain::RK1(double &k0, int &k)
 }
 
 
-int Domain::Boris(double &k0, int &k)
+int Domain::Boris(WDOUBLE &k0, int &k)
 {
    int ierr=0;
    int NF;
-   double dz2dz;
+   WDOUBLE dz2dz;
 
 
-   p_Meshes ->AdjustZstep(k0, k, dz2dz);
+   p_Meshes ->AdjustZstep(k0, k, dz2dz);  
    //================================
    //======== Push Trajectory by E ======
    if((ierr = PushWakeFieldsE(k0, k))) return 0;
@@ -139,6 +139,9 @@ int Domain::Boris(double &k0, int &k)
    }
    //================================
 
+
+   
+   
    return 1;
 
 }
@@ -163,7 +166,7 @@ int Domain:: PushPulses(int k, int NF)
 }
 
 
-int Domain:: PushWakeFields(double k0, int k)
+int Domain:: PushWakeFields(WDOUBLE k0, int k)
 {
    int ierr=0;
    //================================
@@ -217,7 +220,7 @@ int Domain:: PushWakeFields(double k0, int k)
 
 }
 
-int Domain:: PushWakeFieldsE(double k0, int k)
+int Domain:: PushWakeFieldsE(WDOUBLE k0, int k)
 {
    int ierr=0;
    //================================
@@ -249,12 +252,13 @@ int Domain:: PushWakeFieldsE(double k0, int k)
    //======== Exchange Wakefield  ===
    //======== Ex Ey Ponx Pony =======
    p_Comm   -> DoCommute(COMMU_F, k);
+   
    p_Meshes ->AdjustFields(k);
    return 0;
 }
 
 
-int Domain:: PushWakeFieldsEz(double k0, int k)
+int Domain:: PushWakeFieldsEz(WDOUBLE k0, int k)
 {
    int ierr=0;
    //================================
@@ -267,11 +271,11 @@ int Domain:: PushWakeFieldsEz(double k0, int k)
    if( (ierr = p_Multi  -> MG_V_cycle(1, k0, k)) )  return 1;
    //==== Ez Exchanged After MG======
    //================================
-   p_Meshes ->AdjustFields(k);
+   // p_Meshes ->AdjustFields(k);
    return 0;
 }
 
-int Domain:: PushWakeFieldsB(double k0, int k)
+int Domain:: PushWakeFieldsB(WDOUBLE k0, int k)
 {
    int ierr=0;
    //================================
@@ -296,7 +300,7 @@ int Domain:: PushWakeFieldsB(double k0, int k)
    //==== By Exchanged After MG======
 
    //======== Exchange Wakefield  ===
-   p_Meshes ->AdjustFields(k);
+   // p_Meshes ->AdjustFields(k);
 
    return 0;
 }

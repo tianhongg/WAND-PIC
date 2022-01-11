@@ -25,7 +25,7 @@
 #define H_MESH
 
 #include <stdlib.h>
-
+#include<vector>
 class Detector;
 //---------------------------- Mesh class -----------------------
 class Mesh : public NList {
@@ -36,8 +36,8 @@ private:
    
    Domain *p_domain() {return Domain::p_Domain;}; // pointer to domain class.
 
-   double dx, dy, dz, dt, dt0;
-   double dzz;
+   WDOUBLE dx, dy, dz, dt, dt0;
+   WDOUBLE dzz;
 
 
    int GridX,GridY,GridZ; // Grid number in X, Y, Z;
@@ -49,8 +49,8 @@ private:
 
    int Rank;
 
-   double Offset_X;     //Defined as the Mesh Bottom_Left Corner.
-   double Offset_Y;     //Defined as the Mesh Bottom_Left Corner.
+   WDOUBLE Offset_X;     //Defined as the Mesh Bottom_Left Corner.
+   WDOUBLE Offset_Y;     //Defined as the Mesh Bottom_Left Corner.
 
 //====plasma=======
    int PProfileT;       //Plasma transverse profile
@@ -58,47 +58,50 @@ private:
    int TpCellx;         //Trajectory per cell in x direction
    int TpCelly;         //Trajectory per cell in y direction
    int PushOrder;       //Push Trajectory Order in z direction
-   double AdaptiveStep;    //Adaptive Z-step for pushing trajectories
-   double V_thresh;
-   double Vmax;
-   double Vlim;
+   WDOUBLE Delta_P;
+   WDOUBLE AdaptiveStep;    //Adaptive Z-step for pushing trajectories
+   WDOUBLE V_thresh;
+   WDOUBLE Vmax;
+   WDOUBLE Vlim;
+
+   int IfAdjustPsi;
 
 //===Possible Ionization
    int if_ioniz;      // if there is a need for ionization.
-   double Ion_R;
-   double Pla_ne;
-   double Dop_ne;
-   double Dop_TB;   //time begine
-   double Dop_TE;   //time end
+   WDOUBLE Ion_R;
+   WDOUBLE Pla_ne;
+   WDOUBLE Dop_ne;
+   WDOUBLE Dop_TB;   //time begine
+   WDOUBLE Dop_TE;   //time end
 
    dcomplex *dAx1;     //store the difference A(t+1)-A(t)
    dcomplex *dAx2;     //store the difference A(t+1)-A(t)
    dcomplex *dAy1;     //store the difference A(t+1)-A(t)
    dcomplex *dAy2;     //store the difference A(t+1)-A(t)
-   double dA0;
+   WDOUBLE dA0;
 
    Cell*        p_CellArray;
    Trajectory*  p_Trajectory;
    Particle*    p_Particle;
    Detector*    XRayDetector;
 
-   double minGamma; // Smallest Gamma in domain
+   WDOUBLE minGamma; // Smallest Gamma in domain
    
 public:
 
 
-   double PlateauBegin;
-   double PlasmaBegin; 
-   double PlateauEnd; 
-   double PlasmaEnd; 
-   double PlasRadius;  
-
+   WDOUBLE PlateauBegin;
+   WDOUBLE PlasmaBegin; 
+   WDOUBLE PlateauEnd; 
+   WDOUBLE PlasmaEnd; 
+   WDOUBLE PlasRadius;  
+   std::vector<WDOUBLE> GridsTmp;
 
    int GetRankIdx_X() {return RankIdx_X;};
    int GetRankIdx_Y() {return RankIdx_Y;};
 
-   double GetOffset_X() {return Offset_X;};
-   double GetOffset_Y() {return Offset_Y;};
+   WDOUBLE GetOffset_X() {return Offset_X;};
+   WDOUBLE GetOffset_Y() {return Offset_Y;};
 
    int GetPushOrder() {return PushOrder;};
    
@@ -119,17 +122,19 @@ public:
 
 
    //Get Physical Coordinates of the Cells in the Mesh;
-   inline double CellX(int i)
+   inline WDOUBLE CellX(int i) //not useful in this version
    {
       return dx*(i - 0.5)+Offset_X;
    };
 
-   inline double CellY(int j)
+   inline WDOUBLE CellY(int j) //not useful in this version
    {
       return dy*(j - 0.5)+Offset_Y;
    };
 
-   inline double CellZ(int k)
+
+
+   inline WDOUBLE CellZ(int k)
    {
       return dz*k;
    };
@@ -156,7 +161,7 @@ public:
 
 
 
-   void     Put_Chi(double k0, int k); 
+   void     Put_Chi(WDOUBLE k0, int k); 
    void Partial_Psi(int k); 
    void Pondermotive(int k);
    void       Put_Jz(int k); 
@@ -164,14 +169,14 @@ public:
    void  Ionization();  // initial stage simple version
    int   Ifioniz(void) {return if_ioniz;};
 
-   double DopeBegin(void) {return Dop_TB;};
-   double DopeEnd(void)   {return Dop_TE;};
+   WDOUBLE DopeBegin(void) {return Dop_TB;};
+   WDOUBLE DopeEnd(void)   {return Dop_TE;};
 
-   double  Dive_J(int i, int j, double k0, int k); // divergence of transverse current
-   double  Curl_J(int i, int j, double k0, int k); // Curl of transverse current
+   WDOUBLE  Dive_J(int i, int j, WDOUBLE k0, int k); // divergence of transverse current
+   WDOUBLE  Curl_J(int i, int j, WDOUBLE k0, int k); // Curl of transverse current
    
-   double SourceX(int i, int j, double k0, int k);
-   double SourceY(int i, int j, double k0, int k);
+   WDOUBLE SourceX(int i, int j, WDOUBLE k0, int k);
+   WDOUBLE SourceY(int i, int j, WDOUBLE k0, int k);
 
    int Get_TpCellx()
    {
@@ -183,26 +188,26 @@ public:
       return TpCelly;
    }
 
-   double ProfileLongi(double xt, double yt, double zt);
-   double ProfileTrans(double xt, double yt, double zt);
-   void PushTrajectory(double k0, int k, int step);
+   WDOUBLE ProfileLongi(WDOUBLE xt, WDOUBLE yt, WDOUBLE zt);
+   WDOUBLE ProfileTrans(WDOUBLE xt, WDOUBLE yt, WDOUBLE zt);
+   void PushTrajectory(WDOUBLE k0, int k, int step);
    void PushTrajectory_Half();
    void PushTrajectory_HalfE(int k);
    void PushTrajectory_HalfB(int k);
    void PushParticle();
    void SetNewTimeStep();
-   void AdjustZstep(double k0, int k, double &dz2dz);
+   void AdjustZstep(WDOUBLE k0, int k, WDOUBLE &dz2dz);
    void ExchangeT();
    void ExchangeP();
-   void PackT(Trajectory* p_Traj, int Sendn, int where);
-   void PackP(Particle*   p_Part, int Sendn, int where);
+   void PackT(Trajectory* p_Traj, WDOUBLE* &Se);
+   void PackP(Particle*   p_Part, WDOUBLE* &Se);
    Trajectory* Reconnect(Trajectory* p_Traj);
    Particle*   Reconnect(Particle*   p_Part);
    dcomplex SourceAx(int i, int j, int k, int NF);
    dcomplex SourceAy(int i, int j, int k, int NF);
    void Put_dA12(int what,  int k, int NF);
    dcomplex GetdA0() {return dA0;}
-
+   WDOUBLE rand_gaussian (WDOUBLE sigma);
 
    Mesh(int XGridN, int YGridN, int ZGridN, FILE *f);
    ~Mesh();
@@ -223,18 +228,18 @@ private:
 public:
 
 
-   double* p_DetectArray;
+   WDOUBLE* p_DetectArray;
    int IfRadiation;
 
    
-   double ThetaMax;
+   WDOUBLE ThetaMax;
    int NTheta;
 
-   double PhiMax;
+   WDOUBLE PhiMax;
    int NPhi;
 
-   double OmegaMin;
-   double OmegaMax;
+   WDOUBLE OmegaMin;
+   WDOUBLE OmegaMax;
    int NOmega;  
 
 
@@ -244,12 +249,12 @@ public:
       return i+(NOmega)*(j+(NTheta)*k);
    };
 
-   inline double GetDetector(int i, int j, int k)
+   inline WDOUBLE GetDetector(int i, int j, int k)
    {
       return p_DetectArray[GetDectN(i,j,k)];
    };
 
-   inline void PutPacket(int i, int j, int k, double EE)
+   inline void PutPacket(int i, int j, int k, WDOUBLE EE)
    {
       p_DetectArray[GetDectN(i,j,k)]+=EE;
       return;
